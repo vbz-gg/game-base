@@ -182,6 +182,17 @@ describe("the engine update", () => {
   })
 
   /**
+   * A token that can push but cannot open a pull request leaves
+   * engine/<version> on the remote with no pull request. The next run finds
+   * no pull request, bumps again from main, and a plain push is refused
+   * because the branch holds the earlier run's commit, so every run after
+   * that is red until somebody deletes the branch by hand.
+   */
+  test("a branch left without its pull request does not wedge the next run", () => {
+    expect(workflow).toContain('git push --force origin "$BRANCH"')
+  })
+
+  /**
    * A pull request opened with GITHUB_TOKEN starts no workflow run, so the
    * checks a reviewer would look for never appear on it. The gate therefore
    * runs in the job that opens the pull request, and the result goes in the
