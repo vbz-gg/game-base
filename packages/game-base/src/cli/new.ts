@@ -18,7 +18,7 @@ import {
   rename,
   writeFile,
 } from "node:fs/promises"
-import { basename, join, sep } from "node:path"
+import { basename, join, relative, sep } from "node:path"
 
 /** The template this package ships, wherever it is installed. */
 export const TEMPLATE_DIR = join(
@@ -42,6 +42,27 @@ const OWN_MANIFEST = join(import.meta.dir, "..", "..", "package.json")
  */
 export const IGNORE_IN_TEMPLATE = "gitignore"
 export const IGNORE_IN_GAME = ".gitignore"
+
+/**
+ * Directories a copy leaves behind, by name rather than by path.
+ *
+ * The first spelling of this tested the absolute source path for `/dist` and
+ * `/node_modules`, which is a filter that works from a source tree and
+ * rejects every file from an installed one: a package installed under
+ * `node_modules` has that in the path of everything it owns. `game-base new`
+ * then made an empty directory and failed reading the package.json it had not
+ * copied. It shipped in 0.1.0 because the tarball was unpacked by hand rather
+ * than installed, and a hand-unpacked tarball is the one layout where the bug
+ * is invisible.
+ */
+export const NOT_COPIED = new Set(["dist", "node_modules"])
+
+/** Whether a file under the template is one a new game should get. */
+export function isCopied(template: string, source: string): boolean {
+  return !relative(template, source)
+    .split(sep)
+    .some((segment) => NOT_COPIED.has(segment))
+}
 
 /** What the template calls itself, and what a copy renames. */
 export const TEMPLATE_ID = "lane-runner"
@@ -127,12 +148,12 @@ export async function createGame(options: NewGameOptions): Promise<NewGame> {
   const versions = options.versions ?? (await versionsFor())
 
   await mkdir(dir, { recursive: true })
-  await cp(options.template ?? TEMPLATE_DIR, dir, {
+  // A template with a build in it would copy somebody else's artifacts into a
+  // new game and call them its own.
+  const template = options.template ?? TEMPLATE_DIR
+  await cp(template, dir, {
     recursive: true,
-    // A template with a build in it would copy somebody else's artifacts into
-    // a new game and call them its own.
-    filter: (source) =>
-      !source.includes(`${sep}dist`) && !source.includes(`${sep}node_modules`),
+    filter: (source) => isCopied(template, source),
   })
 
   await rename(join(dir, IGNORE_IN_TEMPLATE), join(dir, IGNORE_IN_GAME)).catch(

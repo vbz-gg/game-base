@@ -24,6 +24,7 @@ import {
   gameIdFrom,
   IGNORE_IN_GAME,
   IGNORE_IN_TEMPLATE,
+  isCopied,
   renamed,
   TEMPLATE_DIR,
   TEMPLATE_ID,
@@ -133,6 +134,48 @@ describe("what a copy is", () => {
   }, 30_000)
 
   /**
+   * The bug 0.1.0 shipped with, and the layout that hid it.
+   *
+   * The filter tested the absolute source path for `/node_modules`, so every
+   * file of a package installed under `node_modules` was rejected and
+   * `game-base new` made an empty directory. It passed here and against a
+   * hand-unpacked tarball, because neither of those paths has `node_modules`
+   * in it, and a hand-unpacked tarball is the one layout an author never has.
+   */
+  test("a template under node_modules is still copied", async () => {
+    const parent = await mkdtemp(join(tmpdir(), "game-base-installed-"))
+    try {
+      const source = join(
+        parent,
+        "node_modules",
+        "@vbz-gg",
+        "game-base",
+        "templates",
+        "game",
+      )
+      await mkdir(join(source, "src", "sim"), { recursive: true })
+      await writeFile(join(source, "package.json"), '{"name":"lane-runner"}\n')
+      await writeFile(
+        join(source, "src", "sim", "manifest.ts"),
+        'id: "lane-runner"\n',
+      )
+
+      await into("installed-copy", async (dir) => {
+        await createGame({ dir, template: source, versions: VERSIONS })
+        const copied = JSON.parse(
+          await readFile(join(dir, "package.json"), "utf8"),
+        ) as { name: string }
+        expect(copied.name).toBe("installed-copy")
+        expect(
+          await readFile(join(dir, "src/sim/manifest.ts"), "utf8"),
+        ).toContain("installed-copy")
+      })
+    } finally {
+      await rm(parent, { recursive: true, force: true })
+    }
+  }, 30_000)
+
+  /**
    * npm renames a `.gitignore` to `.npmignore` inside a tarball, so the
    * template carries one under a name npm leaves alone. Without the rename
    * every game made from an installed copy starts out committing its build.
@@ -194,6 +237,40 @@ describe("what a copy is", () => {
       expect(new TextDecoder().decode(sim)).toContain("fresh-game")
     })
   }, 120_000)
+})
+
+describe("what a copy leaves behind", () => {
+  const TEMPLATE = join(
+    "any",
+    "where",
+    "node_modules",
+    "pkg",
+    "templates",
+    "game",
+  )
+
+  test("a build or an install inside the template is skipped", () => {
+    expect(isCopied(TEMPLATE, join(TEMPLATE, "dist", "sim.js"))).toBe(false)
+    expect(
+      isCopied(TEMPLATE, join(TEMPLATE, "node_modules", "x", "y.js")),
+    ).toBe(false)
+  })
+
+  test("the template's own place in the tree decides nothing", () => {
+    // Every path above the template holds `node_modules` here, and none of it
+    // is the template's business.
+    expect(isCopied(TEMPLATE, join(TEMPLATE, "package.json"))).toBe(true)
+    expect(isCopied(TEMPLATE, join(TEMPLATE, "src", "sim", "index.ts"))).toBe(
+      true,
+    )
+  })
+
+  test("a name that merely starts with a skipped one is kept", () => {
+    expect(isCopied(TEMPLATE, join(TEMPLATE, "distance.ts"))).toBe(true)
+    expect(isCopied(TEMPLATE, join(TEMPLATE, "src", "distances", "a.ts"))).toBe(
+      true,
+    )
+  })
 })
 
 describe("the versions a new game asks for", () => {
