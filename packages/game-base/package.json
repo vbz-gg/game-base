@@ -39,7 +39,7 @@
     }
   },
   "peerDependencies": {
-    "@clockwork2/engine": ">=0.5.0"
+    "@clockwork2/engine": ">=0.6.0"
   },
   "bin": {
     "game-base": "./dist/cli/index.js"

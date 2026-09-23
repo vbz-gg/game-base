@@ -1,4 +1,8 @@
 {
   "files": [],
-  "references": [{ "path": "packages/game-base" }]
+  "references": [
+    {
+      "path": "packages/game-base"
+    }
+  ]
 }
