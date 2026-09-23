@@ -22,6 +22,13 @@ coveragePathIgnorePatterns = [
   # into the test runner would start a server and never return. What it
   # decides is `parseArgs`, which is exported and tested.
   "packages/game-base/src/cli/index.ts",
+  # The harness page's own script. It reads `document` at module scope and
+  # wires itself to a live frame, so importing it into the runner starts
+  # nothing and measures nothing. What it decides - which layout the picker
+  # draws, which binding goes with it, when a recording is whole - is checked
+  # by the browser suite, which drives the page it builds. Listed rather than
+  # left out, so that it is a decision rather than a file nobody loaded.
+  "packages/game-base/src/harness/page/main.ts",
   "fixtures/**",
   "templates/**",
   "e2e/**",

@@ -2,9 +2,11 @@
  * The harness page, shaped like the arcade's play view.
  *
  * The game gets the whole viewport, one floating mark sits over it, and the
- * controls are drawn on top. The picker and the status line are the two
- * things the arcade does not have: an author needs to switch schemes without
- * editing a manifest, and needs to see what the bridge is saying.
+ * controls are drawn on top. The picker, the status line and the
+ * two run buttons are what the arcade does not have: an author needs to
+ * switch schemes without editing a manifest, needs to see what the bridge is
+ * saying, and needs the run's recording, which is the evidence the arcade
+ * would replay.
  *
  * The config travels in a JSON script block rather than in the URL, so a seed
  * does not end up in a referrer or a server log, and the page's own script is
@@ -48,6 +50,8 @@ export function harnessPage(input: HarnessPageInput): string {
         border: 1px solid #3a3d46; border-radius: 8px; padding: 6px 10px;
         font: inherit; }
       #status { opacity: 0.6; }
+      #bar a { color: #3bd68a; text-decoration: none; }
+      #bar a[hidden] { display: none; }
     </style>
   </head>
   <body>
@@ -57,10 +61,15 @@ export function harnessPage(input: HarnessPageInput): string {
       <span id="status">starting</span>
       <select id="picker" aria-label="Control scheme"></select>
       <button id="start" type="button">Start</button>
+      <button id="end" type="button">End</button>
+      <a id="save" download="recording.json" hidden>Save recording</a>
     </div>
     <script type="application/json" id="harness-config">${escapeJson(
       input.config,
     )}</script>
+    <!-- Filled in by the page once a run has ended and its recording has
+         arrived: what the run scored, and the recording itself. -->
+    <script type="application/json" id="run"></script>
     <script type="module" src="/harness.js"></script>
   </body>
 </html>

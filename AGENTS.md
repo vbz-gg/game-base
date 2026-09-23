@@ -18,6 +18,7 @@ bun run lint           # biome check .
 bun run lint:fix
 bun test               # the unit suite
 bun run test:coverage  # the same tests, then the 99% floor over packages/*/src
+bun run test:e2e       # the browser suite, against a real sandboxed frame
 bun run check:publishable   # pack the package and read what a consumer gets
 ```
 
@@ -87,6 +88,57 @@ a button that is about to stop existing will never send an event.
   belongs in the browser suite.
 - Playwright runs with `retries: 0`. For a suite about determinism, flake is
   the finding.
+
+## The browser suite
+
+`e2e/` drives the harness an author runs, against both subjects this
+repository ships: the template, which declares a scheme, and the paddle
+fixture, which declares `{ mode: "custom" }`. One process builds each game
+through the real CLI and serves it, so a stale `dist` cannot be what is
+tested, and it keeps a request log per subject that a spec reads to see what
+the browser actually fetched.
+
+What only a browser can settle, and what each one caught: a sandboxed frame
+loading its own modules from an opaque origin; `max()` around an `env()`
+resolving at all; a pointer that presses a button and is released somewhere
+else, which without `setPointerCapture` records the press and never the
+release; two fingers, where lifting one must not lift the other; and a
+recording replaying to the counters the page displayed. The picker test found
+a live bug while it was being written - the harness page handed a game's
+declared binding to every layout the picker offered, so a game binding two
+slots drew two buttons under `dpad+2` and called it six.
+
+Two things about the tools themselves, measured rather than read:
+
+- **A spec cannot import `@clockwork2/engine`.** Its built output imports its
+  own files without extensions - `from "./bits"` - which bun and every bundler
+  resolve and plain node ESM does not, and Playwright's runner is node. So
+  `e2e/src/replay.ts` runs under bun and everything node-side treats a
+  recording as the JSON it is. Measured on engine 0.6.0 under node 22:
+  `ERR_MODULE_NOT_FOUND` on the engine's first relative import.
+- **A CDP `touchEnd` carries the finger being lifted**, not the ones still
+  down, although the protocol describes `touchPoints` as "active touch
+  points". With two fingers down, ending with the point that is still down
+  releases that one. `e2e/src/fingers.ts` has the sequence that measured it.
+
+## Why the engine is a peer dependency
+
+A game installs `@clockwork2/engine` itself - its simulation and its frame
+both import it - and the manifest, the recording format and the parent-frame
+protocol are a contract between the engine the game carries and the engine the
+host runs. A regular dependency here would let a game hold two copies on two
+versions and have the halves of that contract disagree at runtime, which the
+frame reports as a protocol error and nothing reports as an install problem.
+
+The range is `>=0.6.0 <0.7.0` rather than open-ended. clockwork2 is 0.x and
+maps a breaking change to a minor, so `0.7.0` may move the very things this
+package is about: `inputs.controls` arrived in a minor, and so did pointer
+identity. Each engine minor is a deliberate bump here.
+
+Only `/harness` imports the engine at all, from one line: the page script
+bundles `@clockwork2/engine/parent`. `/controls`, `/build` and `/serve` reach
+it nowhere, which is what lets the arcade import the renderer into a browser
+bundle without dragging anything behind it.
 
 ## Releasing
 
