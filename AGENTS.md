@@ -1,12 +1,15 @@
 # Working in this repository
 
-Guidance for coding agents. `README.md` says what the project is;
-`packages/game-base/README.md` is what a game author reads.
+Guidance for coding agents. **Read `docs/sdk.md` first**: it explains how this
+package works from first principles, and everything below assumes it. The rest
+of the reading, in order of how far away it is: `README.md` says what the
+repository is, `packages/game-base/README.md` is what a game author reads, and
+clockwork2's `docs/engine.md` is required before changing anything that touches
+a manifest or an input.
 
 This repository sits between two others. [clockwork2](https://github.com/vbz-gg/clockwork2)
 is the engine and owns determinism, the manifest and the host bridge; the
-[arcade](https://github.com/vbz-gg/arcade) runs the platform. Read clockwork2's
-`docs/engine.md` before changing anything that touches a manifest or an input.
+[arcade](https://github.com/vbz-gg/arcade) runs the platform.
 
 ## Commands
 
@@ -37,11 +40,10 @@ That is also why the renderer is plain DOM behind
 is React and the harness is not; a component would make one of them wrap the
 other, and a wrapper is where a difference starts.
 
-## Controls
+## Working on controls
 
-A game declares `inputs.controls` in its manifest, and there are three answers:
-a named scheme the host draws, `{ mode: "custom" }` for a game that paints its
-own, and leaving the field out, which says the game needs a keyboard.
+`docs/sdk.md` has the three answers a manifest can give, the scheme table and
+the custom path. What to hold while changing any of it:
 
 **The scheme list is short on purpose.** Each entry is a layout a host has to
 draw correctly at every screen size, in a skin it chose, forever. A scheme
@@ -54,18 +56,18 @@ left-and-right game.
 press and a stick sends two axes, so adding one is a change to the engine's
 protocol first.
 
-**The renderer sets layout, hit target and safe-area clearance itself**, and
-takes every colour from a CSS custom property with a fallback. A host restyles
-it without a stylesheet from us, and cannot restyle away a 44px minimum or the
-`env(safe-area-inset-*)` clearance, because a control the player cannot reach
-is the same as one that is not there.
+**Layout, hit target and safe-area clearance belong to the renderer**, and
+every colour to a CSS custom property with a fallback. A host must be able to
+restyle it without a stylesheet from us, and must not be able to restyle away
+the 44px minimum or the `env(safe-area-inset-*)` clearance.
 
-**A control that goes down must come up.** The arcade's first pad bound
-`pointerdown` and nothing else, so a held control never released. A game
-reading a direction change survived it; a platformer holding `right` ran into
-the wall for the rest of the session. `pointerup`, `pointercancel` and
-`lostpointercapture` all release, and so do `update()` and `destroy()`, because
-a button that is about to stop existing will never send an event.
+**A control that goes down must come up.** `pointerup`, `pointercancel`,
+`lostpointercapture`, `update()` and `destroy()` all release. Adding a fifth
+way for a press to end means adding a sixth release.
+
+**A game may not construct an input.** Anything that would let a renderer
+decide which control was pressed and hand the answer over is the hole the
+custom path exists to close.
 
 ## Tests
 
@@ -88,6 +90,9 @@ a button that is about to stop existing will never send an event.
   belongs in the browser suite.
 - Playwright runs with `retries: 0`. For a suite about determinism, flake is
   the finding.
+- A record-and-replay test needs a non-triviality guard. Assert the recording
+  holds the presses the test made, or a page that silently records nothing
+  passes every comparison.
 
 ## The browser suite
 
@@ -121,25 +126,6 @@ Two things about the tools themselves, measured rather than read:
   points". With two fingers down, ending with the point that is still down
   releases that one. `e2e/src/fingers.ts` has the sequence that measured it.
 
-## Why the engine is a peer dependency
-
-A game installs `@clockwork2/engine` itself - its simulation and its frame
-both import it - and the manifest, the recording format and the parent-frame
-protocol are a contract between the engine the game carries and the engine the
-host runs. A regular dependency here would let a game hold two copies on two
-versions and have the halves of that contract disagree at runtime, which the
-frame reports as a protocol error and nothing reports as an install problem.
-
-The range is `>=0.6.0 <0.7.0` rather than open-ended. clockwork2 is 0.x and
-maps a breaking change to a minor, so `0.7.0` may move the very things this
-package is about: `inputs.controls` arrived in a minor, and so did pointer
-identity. Each engine minor is a deliberate bump here.
-
-Only `/harness` imports the engine at all, from one line: the page script
-bundles `@clockwork2/engine/parent`. `/controls`, `/build` and `/serve` reach
-it nowhere, which is what lets the arcade import the renderer into a browser
-bundle without dragging anything behind it.
-
 ## Releasing
 
 Patch and minor only. **No major releases for now**, here, in clockwork2 or in
@@ -160,11 +146,46 @@ the version literal therefore has to be in `bumpFiles`; clockwork2 lost several
 releases to exactly that, and `scripts/release-version.test.ts` is where the
 next such file gets caught.
 
+Raising the engine's peer range is a deliberate act, not maintenance. See the
+last section of `docs/sdk.md` for why it is bounded above.
+
+## Commit gates
+
+Two hooks run on every commit. `pre-commit` lints. `commit-msg` runs
+commitlint and demands a `Docs-Updated:` trailer. Never bypass either with
+`--no-verify`.
+
+The trailer records the pass no test can make. Most of what this package
+documents is a contract rather than a behaviour - which slots a scheme has,
+what a frame may import, which headers make a sandboxed frame load - and
+nothing measures whether a paragraph about one of those is still true. Writing
+the trailer says you re-read the pages covering what you changed and brought
+them back in line.
+
+It is demanded when the commit stages anything under `packages/`, `e2e/`,
+`scripts/`, `skill/`, `docs/`, `templates/` or `fixtures/`, or `README.md`,
+`package.json`, `tsconfig*.json`, `biome.json`, `bunfig.toml` or `.github/`.
+Merge, revert, fixup, squash and `chore(release)` commits are exempt: git and
+commit-and-tag-version write those messages themselves, some with no editor at
+all.
+
+A value under ten characters is rejected, as is a stamp from the list in
+`scripts/check-docs-updated.ts`. Say what you did, inside the 100 columns
+commitlint allows a trailer line:
+
+    Docs-Updated: added the dpad+2 slots to sdk.md and to the skill's controls page
+    Docs-Updated: re-read sdk.md on the two artifacts; the rewrite is unchanged
+    Docs-Updated: new browser test only, no documented contract moved
+
+The trailer has to be true. A new path carrying documentation joins
+`BEARING_PATTERNS` in `scripts/check-docs-updated.ts` in the same change.
+
 ## Prose
 
 Run the `humanizer` skill over anything a person reads before committing it:
-`README.md`, the package README, `SKILL.md` and its references, and release
-notes. Rewrite what it flags rather than patching the flagged phrase.
+`README.md`, the package README, `docs/sdk.md`, `SKILL.md` and its references,
+and release notes. Rewrite what it flags rather than patching the flagged
+phrase.
 
 The house rules it does not cover:
 

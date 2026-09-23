@@ -17,12 +17,14 @@ It publishes one package, `@vbz-gg/game-base`, which carries:
   origins, the sandbox, the CSP and the full-viewport play view
 
 What a game author does with it is in
-[`packages/game-base/README.md`](packages/game-base/README.md).
+[`packages/game-base/README.md`](packages/game-base/README.md), and
+[`docs/sdk.md`](docs/sdk.md) explains how the whole thing works.
 
 ## Layout
 
 ```
 packages/game-base/   the published package
+docs/sdk.md           how it works, from first principles
 templates/game/       a game that takes a scheme, to copy and start from
 fixtures/paddle/      a small game that draws its own controls instead
 e2e/                  the browser suite, driving the harness for real
