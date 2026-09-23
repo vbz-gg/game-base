@@ -25,3 +25,48 @@ jobs:
       # manifest on disk is what ships, so a missing README or a dependency
       # that crept in is caught here rather than by whoever installs it.
       - run: bun run check:publishable
+
+  browser:
+    name: the browser suite
+    runs-on: ubuntu-latest
+
+    env:
+      CI: "true"
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.11
+
+      - run: bun install --frozen-lockfile
+
+      # Chromium is a few hundred megabytes, so it is cached by the version
+      # the lockfile pins rather than downloaded on every run.
+      - name: cache the browser
+        id: browser-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ hashFiles('bun.lock') }}
+
+      # Through the workspace's own binary, never `bunx playwright`, which
+      # resolves the newest `playwright` from the registry and downloads a
+      # browser build the pinned version does not look for.
+      - if: steps.browser-cache.outputs.cache-hit != 'true'
+        run: bun run --cwd e2e install:browsers
+
+      # The system libraries even on a cache hit: the browser binary needs
+      # them and the cache does not carry them.
+      - if: steps.browser-cache.outputs.cache-hit == 'true'
+        run: bun run --cwd e2e install:browser-deps
+
+      - run: bun run test:e2e
+
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            e2e/playwright-report
+            e2e/test-results

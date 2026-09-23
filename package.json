@@ -11,7 +11,8 @@
     "url": "git+https://github.com/vbz-gg/game-base.git"
   },
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "e2e"
   ],
   "engines": {
     "node": ">=22.0.0"
@@ -19,7 +20,7 @@
   "scripts": {
     "build": "tsc -b",
     "clean": "rm -rf packages/*/dist packages/*/*.tsbuildinfo coverage e2e/test-results e2e/playwright-report",
-    "typecheck": "tsc -b && tsc -p tsconfig.tests.json",
+    "typecheck": "tsc -b && tsc -p tsconfig.tests.json && tsc -p e2e && tsc -p fixtures/paddle && tsc -p templates/game",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
@@ -33,7 +34,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
-    "@clockwork2/engine": "0.4.0",
+    "@clockwork2/engine": "0.6.0",
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
     "@happy-dom/global-registrator": "^20.14.5",

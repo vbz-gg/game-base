@@ -21,9 +21,27 @@
       "development": "./src/controls/index.ts",
       "types": "./dist/controls/index.d.ts",
       "default": "./dist/controls/index.js"
+    },
+    "./build": {
+      "development": "./src/build/index.ts",
+      "types": "./dist/build/index.d.ts",
+      "default": "./dist/build/index.js"
+    },
+    "./serve": {
+      "development": "./src/serve/index.ts",
+      "types": "./dist/serve/index.d.ts",
+      "default": "./dist/serve/index.js"
+    },
+    "./harness": {
+      "development": "./src/harness/index.ts",
+      "types": "./dist/harness/index.d.ts",
+      "default": "./dist/harness/index.js"
     }
   },
   "peerDependencies": {
-    "@clockwork2/engine": ">=0.5.0"
+    "@clockwork2/engine": ">=0.6.0 <0.7.0"
+  },
+  "bin": {
+    "game-base": "./dist/cli/index.js"
   }
 }

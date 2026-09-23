@@ -1,27 +1,30 @@
 #!/usr/bin/env bun
 /**
- * Packs every public package and reads what a consumer would actually get.
+ * Packs the package and reads what a consumer would actually get.
  *
- * The failure this exists for is silent and total. Cross-package dependencies
- * are declared `workspace:*`, which is what makes the monorepo resolve
- * locally; npm ships that string verbatim, so the tarball would carry
- * `"@vbz-gg/game-base": "workspace:*"` and `npm install` would fail for
- * everyone, forever, on a version that cannot be unpublished after 72 hours.
- * Nothing in a build, a lint or a test sees it.
- *
- * `scripts/publish.ts` rewrites each manifest with `resolveWorkspaceDeps`
- * before calling npm. This packs through that same function, so what it reads
- * is what a release would really ship rather than what a different tool would
- * have shipped.
+ * Everything this checks is invisible to a build, a lint and the test suite,
+ * because all three run inside a workspace where everything already resolves.
+ * A `workspace:` range would reach the registry verbatim and make a version
+ * uninstallable by anyone, permanently, since nothing can be unpublished after
+ * 72 hours. A missing `dist` ships a package whose every exports target is a
+ * 404. And an extensionless relative import runs everywhere here and nowhere
+ * under plain node.
  *
  *   bun run scripts/check-publishable.ts
  *
- * Exit codes: 0 passed, 1 a package would ship broken, 2 nothing to check.
+ * Exit codes: 0 passed, 1 the package would ship broken, 2 nothing to check.
  */
 
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs"
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+} from "node:fs"
 import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { join, resolve } from "node:path"
+import { pathToFileURL } from "node:url"
 import { $ } from "bun"
 
 export const PUBLIC_PACKAGES = ["game-base"] as const
@@ -31,15 +34,110 @@ export type Shipped = {
   readonly version: string
   readonly dependencies: Record<string, string>
   readonly files: readonly string[]
+  /** What plain node made of every subpath the exports map names. */
+  readonly imports: ImportReport
 }
+
+type ExportsMap = Record<string, { default?: string } | string>
+
+/** What `unimportableSubpaths` found, and what it could not ask about. */
+export type ImportReport = {
+  readonly problems: readonly string[]
+  /** Subpaths whose peer is not installed here. */
+  readonly skipped: readonly string[]
+}
+
+/** Every subpath in the exports map, and the file it resolves to. */
+export function exportTargets(
+  exports: ExportsMap | undefined,
+): readonly (readonly [string, string])[] {
+  const out: [string, string][] = []
+  for (const [subpath, target] of Object.entries(exports ?? {})) {
+    const file = typeof target === "string" ? target : target.default
+    if (file !== undefined) out.push([subpath, file])
+  }
+  return out
+}
+
+/**
+ * An error node raises for a bare specifier it cannot resolve.
+ *
+ * A peer that is not installed is not a finding about this package, and it
+ * reads differently from a relative path node cannot resolve, which is.
+ */
+const MISSING_PEER = /Cannot find package '([^']+)'/
+
+/**
+ * Imports every subpath of an unpacked package with plain node.
+ *
+ * Bun and every bundler resolve an extensionless relative import; node ESM
+ * does not, and `tsc` emits what the source wrote. So a package can build,
+ * typecheck, pass its whole suite under bun and still fail on a consumer's
+ * first `import` with ERR_MODULE_NOT_FOUND.
+ *
+ * The repository's node_modules is linked into the unpacked tree, so the peer
+ * resolves the way it would for somebody who installed it.
+ */
+export async function unimportableSubpaths(
+  packageDir: string,
+): Promise<ImportReport> {
+  const manifest = JSON.parse(
+    readFileSync(join(packageDir, "package.json"), "utf8"),
+  ) as { exports?: ExportsMap }
+
+  try {
+    symlinkSync(resolve("node_modules"), join(packageDir, "node_modules"))
+  } catch {
+    // Already there, or a filesystem that will not link. Every subpath with no
+    // peer of its own is still checked, which is most of them.
+  }
+
+  const problems: string[] = []
+  const skipped: string[] = []
+  for (const [subpath, file] of exportTargets(manifest.exports)) {
+    // Anything that is not a module is data, and importing JSON needs an
+    // import attribute the consumer supplies.
+    if (!file.endsWith(".js")) continue
+
+    const url = pathToFileURL(join(packageDir, file)).href
+    const result =
+      await $`node --input-type=module -e ${`await import(${JSON.stringify(url)})`}`
+        .quiet()
+        .nothrow()
+    if (result.exitCode === 0) continue
+
+    const stderr = result.stderr.toString()
+    const peer = stderr.match(MISSING_PEER)
+    if (peer !== null) {
+      skipped.push(`${subpath} (${peer[1]} is not installed here)`)
+      continue
+    }
+    const reason =
+      stderr
+        .split("\n")
+        .find((line) => line.includes("Cannot find"))
+        ?.trim() ?? stderr.split("\n")[0]?.trim()
+    problems.push(`node cannot import "${subpath}": ${reason}`)
+  }
+  return { problems, skipped }
+}
+
+/**
+ * Files the package reads at runtime rather than imports.
+ *
+ * The harness bundles its own page script when it starts, from a path it
+ * builds off `import.meta.dir`. In this repository that resolves to the
+ * TypeScript beside the source and in an installed copy it has to resolve to
+ * the compiled file, which only ships if `tsc` emitted it. Nothing importing
+ * the package would notice: the failure arrives when somebody runs
+ * `game-base dev`.
+ */
+export const RUNTIME_FILES: readonly string[] = ["dist/harness/page/main.js"]
 
 /** Reads the package.json a tarball would carry, not the one on disk. */
 export async function pack(pkg: string, into: string): Promise<Shipped> {
-  // No rewrite before packing any more. When this was six packages each
-  // declared its siblings `workspace:*`, and the publisher substituted the
-  // real version on the way out - so a check that packed the manifest on disk
-  // was measuring a release nobody performs. One package has no sibling, so
-  // what is on disk is what ships.
+  // What is on disk is what ships: there is one package, with no sibling to
+  // depend on, so no publish-time rewrite stands between the two.
   await $`npm pack --pack-destination ${into}`.cwd(`packages/${pkg}`).quiet()
   const tarball = [...new Bun.Glob("*.tgz").scanSync(into)][0]
   if (tarball === undefined) throw new Error(`${pkg} produced no tarball`)
@@ -55,6 +153,7 @@ export async function pack(pkg: string, into: string): Promise<Shipped> {
     version: manifest.version,
     dependencies: manifest.dependencies ?? {},
     files,
+    imports: await unimportableSubpaths(join(out, "package")),
   }
 }
 
@@ -75,6 +174,14 @@ export function problemsWith(shipped: Shipped): string[] {
   if (!shipped.files.some((file) => file.startsWith("dist/"))) {
     problems.push(`${shipped.name} would ship no dist; run "bun run build"`)
   }
+  for (const file of RUNTIME_FILES) {
+    if (!shipped.files.includes(file)) {
+      problems.push(
+        `${shipped.name} would ship no ${file}, which it reads at runtime`,
+      )
+    }
+  }
+  problems.push(...shipped.imports.problems)
   return problems
 }
 
@@ -85,7 +192,7 @@ async function main(): Promise<number> {
   }
   const found: string[] = []
   for (const pkg of PUBLIC_PACKAGES) {
-    const into = mkdtempSync(join(tmpdir(), `cw2-pack-${pkg}-`))
+    const into = mkdtempSync(join(tmpdir(), `game-base-pack-${pkg}-`))
     try {
       const shipped = await pack(pkg, into)
       const problems = problemsWith(shipped)
@@ -93,6 +200,9 @@ async function main(): Promise<number> {
       console.log(
         `${problems.length === 0 ? "ok  " : "BAD "} ${shipped.name}@${shipped.version}  ${shipped.files.length} files`,
       )
+      for (const note of shipped.imports.skipped) {
+        console.log(`     not imported: ${note}`)
+      }
     } finally {
       rmSync(into, { recursive: true, force: true })
     }

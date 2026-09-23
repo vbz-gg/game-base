@@ -18,7 +18,7 @@ import {
   type ControlScheme,
   SCHEMES,
   type SchemeSlot,
-} from "./schemes"
+} from "./schemes.js"
 
 export interface ControlsOptions {
   readonly scheme: ControlScheme

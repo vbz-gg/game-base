@@ -1,0 +1,15 @@
+{
+  "name": "lane-runner",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "game-base dev .",
+    "build": "game-base build ."
+  },
+  "devDependencies": {
+    "@clockwork2/engine": "0.6.0",
+    "@vbz-gg/game-base": "^0.1.0",
+    "typescript": "5.9.3"
+  }
+}
