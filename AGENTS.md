@@ -195,6 +195,13 @@ tested:
   them that is the version whose release body says nothing about itself.
 - **The tag names the bump commit**, not the one the job checked out.
 
+**The last step tells the arcade.** It sends a `game-base-released` dispatch
+carrying the version, so the arcade's update job opens its pull request in
+seconds. It reads `ENGINE_RELEASED_TOKEN`, the secret clockwork2's release
+uses to tell this repository, and it is best-effort: a missing token prints a
+line and exits 0, because the version is already out and the arcade's daily
+check will find it.
+
 `.versionrc.json`'s `prerelease` hook runs the gate before the version is
 bumped, so it never sees the tree a release actually ships. Anything holding
 the version literal therefore has to be in `bumpFiles`; clockwork2 lost several

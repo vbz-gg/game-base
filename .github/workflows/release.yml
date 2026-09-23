@@ -200,3 +200,34 @@ jobs:
             --title "$tag" \
             --notes-file "$RUNNER_TEMP/notes.md" \
             --target "${RELEASE_SHA:-$GITHUB_SHA}"
+
+      # Tell the arcade, so a release reaches it in seconds rather than when
+      # its own daily check next runs. The arcade pins this package exactly
+      # and follows it with a pull request, the way this repository follows
+      # the engine.
+      #
+      # GITHUB_TOKEN is scoped to this repository and cannot dispatch to
+      # another, so this reads ENGINE_RELEASED_TOKEN, the organisation secret
+      # clockwork2's release uses for the same job. It needs Contents: write
+      # and Pull requests: write on the arcade and nothing else.
+      #
+      # Best-effort on purpose. By this point the version is published, tagged
+      # and announced, so a missing or expired token must not turn a release
+      # that worked into a red run. The arcade also polls the registry daily,
+      # which is what makes a failure here a delay rather than a miss.
+      - name: Tell the arcade
+        if: github.event_name != 'workflow_dispatch' || !inputs.dry_run
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.ENGINE_RELEASED_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "no ENGINE_RELEASED_TOKEN; the arcade's daily check will pick this up" >&2
+            exit 0
+          fi
+          version="$(node -p "require('./packages/game-base/package.json').version")"
+          echo "telling vbz-gg/arcade about $version"
+          gh api repos/vbz-gg/arcade/dispatches \
+            -f event_type=game-base-released \
+            -f "client_payload[version]=$version"
