@@ -26,6 +26,12 @@ coveragePathIgnorePatterns = [
   "templates/**",
   "e2e/**",
   "scripts/**",
+  # The template and the fixture, built to a temp directory and loaded by the
+  # conformance suite. They are the subjects under test rather than this
+  # package's code, and how much of a game runs during a determinism check
+  # says nothing about game-base. They also arrive with a fresh random name
+  # every run, as `../../../tmp/game-base-conformance-1hN9V6/index.js`.
+  "**/game-base-conformance-*/**",
 ]
 
 # No `coverageThreshold` here on purpose, and adding one back is a mistake.
