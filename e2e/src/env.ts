@@ -18,7 +18,11 @@ export const CONTROL_PORT = 4319
  * a browser is the only place the difference is visible.
  */
 export const SUBJECTS = {
-  template: { dir: ["templates", "game"], hostPort: 4320, framePort: 4321 },
+  template: {
+    dir: ["packages", "game-base", "templates", "game"],
+    hostPort: 4320,
+    framePort: 4321,
+  },
   paddle: { dir: ["fixtures", "paddle"], hostPort: 4322, framePort: 4323 },
 } as const
 

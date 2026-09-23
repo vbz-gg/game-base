@@ -84,6 +84,21 @@ the tarball - `RUNTIME_FILES` in the script - because the harness bundles its
 page script from a path built off `import.meta.dir`, and nothing importing the
 package would notice that file missing.
 
+## The skill
+
+`skill/arcade-game/` is prose an agent follows literally, so a stale sentence
+is worse than a missing one. It has one subject: everything between a
+conforming simulation and a game the arcade can run. Determinism belongs to
+clockwork2's `platform-game`, and this one points at it rather than repeating
+it - two copies of that rulebook is how one of them goes quietly out of date.
+
+`skill/tests/skill.test.ts` measures the drift a machine can see: every scheme
+and slot in the reference matches `SCHEMES`, the size caps and the 44px
+minimum match the code, every refusal code named exists and every one that
+exists is explained, the commands are the CLI's, the layout it prints is the
+template's, and every reference is linked both ways. Adding a scheme fails it
+until the reference has a line.
+
 ## Tests
 
 - Add a test for a concrete failure mode. A test that restates the
@@ -128,18 +143,18 @@ a live bug while it was being written - the harness page handed a game's
 declared binding to every layout the picker offered, so a game binding two
 slots drew two buttons under `dpad+2` and called it six.
 
-Two things about the tools themselves, measured rather than read:
+One thing about the tools themselves, measured rather than read:
 
-- **A spec cannot import `@clockwork2/engine`.** Its built output imports its
-  own files without extensions - `from "./bits"` - which bun and every bundler
-  resolve and plain node ESM does not, and Playwright's runner is node. So
-  `e2e/src/replay.ts` runs under bun and everything node-side treats a
-  recording as the JSON it is. Measured on engine 0.6.0 under node 22:
-  `ERR_MODULE_NOT_FOUND` on the engine's first relative import.
 - **A CDP `touchEnd` carries the finger being lifted**, not the ones still
   down, although the protocol describes `touchPoints` as "active touch
   points". With two fingers down, ending with the point that is still down
   releases that one. `e2e/src/fingers.ts` has the sequence that measured it.
+
+Until engine 0.7.1 a spec could not import `@clockwork2/engine` at all, because
+its built output imported its own files without extensions and Playwright's
+runner is node, so the replay ran in a bun subprocess. That is what the `.js`
+rule below is about, and it is why `check:publishable` imports every subpath
+under plain node.
 
 ## Releasing
 

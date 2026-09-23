@@ -54,9 +54,9 @@ export const BEARING_PATTERNS: readonly RegExp[] = [
   /^scripts\//,
   /^skill\//,
   /^docs\//,
-  // A template is copied into somebody's project and a fixture is the worked
-  // example a doc points at, so both are documentation that happens to run.
-  /^templates\//,
+  // A fixture is the worked example a doc points at, so it is documentation
+  // that happens to run. The template is one too, and it lives under
+  // packages/ because it ships with the package.
   /^fixtures\//,
   /^README\.md$/,
   /^package\.json$/,

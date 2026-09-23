@@ -20,9 +20,11 @@ import {
 } from "../harness/index.js"
 import { type Options, parseArgs } from "./args.js"
 import { readManifestFromSim } from "./manifest.js"
+import { createGame } from "./new.js"
 
 const USAGE = `game-base - build and run a game the vbz arcade can take
 
+  game-base new   [dir]    copy a game that already conforms, and rename it
   game-base build [dir]    write dist/sim.js, dist/frame.js and dist/manifest.json
   game-base dev   [dir]    serve the game the way the arcade does
 
@@ -85,6 +87,16 @@ async function dev(options: Options): Promise<void> {
 export async function main(argv: readonly string[]): Promise<number> {
   const options = parseArgs(argv)
   switch (options.command) {
+    case "new": {
+      const made = await createGame({ dir: options.dir })
+      process.stdout.write(
+        `${made.dir}\n\n` +
+          `  ${made.id}, which is the id its board will be kept under\n\n` +
+          "  bun install\n" +
+          "  bun run dev\n\n",
+      )
+      return 0
+    }
     case "build":
       await build(options)
       return 0

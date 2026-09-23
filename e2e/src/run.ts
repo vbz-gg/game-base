@@ -1,21 +1,28 @@
 /**
  * What a spec does with a harness: open it, play it, read what it recorded.
  *
- * These run under node, because Playwright's runner does, and nothing here
- * imports `@clockwork2/engine`. The engine's built output imports its own
+ * These run under node, because Playwright's runner does. Until engine 0.7.1
+ * that ruled the engine out entirely - its built output imported its own
  * files without extensions, which bun and every bundler resolve and plain
- * node ESM does not, so anything needing the engine runs in `replay.ts` under
- * bun instead. A recording is JSON either way, which is what lets a spec read
- * one without the engine at all.
+ * node ESM does not - and the replay ran in a bun subprocess. It no longer
+ * has to.
  */
 
-import { spawn } from "node:child_process"
-import { dirname, join } from "node:path"
-import { fileURLToPath } from "node:url"
+import { mkdtemp, rm, writeFile } from "node:fs/promises"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
+import { pathToFileURL } from "node:url"
+import {
+  compareToRecording,
+  decodeRecording,
+  type GameModule,
+  type Manifest,
+  type PlainValue,
+  RecordedInputSource,
+  runSession,
+} from "@clockwork2/engine"
 import { expect, type Page } from "@playwright/test"
 import { CONTROL_ORIGIN, hostOrigin, type SubjectName } from "./env"
-
-const HERE = dirname(fileURLToPath(import.meta.url))
 
 export interface SubjectInfo {
   readonly hostOrigin: string
@@ -139,40 +146,51 @@ export interface Replayed {
 /**
  * Replays a run against the very bytes the browser loaded.
  *
- * The work happens in a bun subprocess, for the reason at the top of this
- * file. It is also where somebody else's simulation belongs: the CLI already
- * refuses to import a game into its own process to read a manifest.
+ * The simulation is fetched from the frame origin at its content address
+ * rather than imported from the source tree, so what runs here is the module
+ * the page ran and not a second build of the same file. Decoding the
+ * recording is itself a check: the format, the version and the shape of every
+ * input are what a platform would refuse a submission over.
+ *
+ * It is written as `.mjs` and not `.js`. A temp directory has no package.json
+ * above it, so node reads a bare `.js` as CommonJS, and importing the
+ * simulation then fails on its first `export` with a syntax error that says
+ * nothing about the extension.
  */
 export async function replay(name: SubjectName, run: Run): Promise<Replayed> {
   const info = (await subjects())[name]
-  const payload = JSON.stringify({
-    sim: `${info.frameOrigin}${info.sim}`,
-    recording: run.encoded,
-  })
+  const recording = decodeRecording(run.encoded)
+  const source = await (await fetch(`${info.frameOrigin}${info.sim}`)).text()
 
-  return await new Promise<Replayed>((resolve, reject) => {
-    const child = spawn("bun", ["run", join(HERE, "replay.ts")], {
-      stdio: ["pipe", "pipe", "pipe"],
+  const dir = await mkdtemp(join(tmpdir(), "game-base-replay-"))
+  try {
+    const file = join(dir, "sim.mjs")
+    await writeFile(file, source)
+    const loaded = (await import(pathToFileURL(file).href)) as {
+      default: () => GameModule<unknown, PlainValue>
+      MANIFEST: Manifest
+    }
+    const replayed = runSession<unknown, PlainValue>({
+      module: loaded.default(),
+      seed: recording.seed,
+      config: recording.config,
+      inputs: new RecordedInputSource(recording.inputs),
+      // The log ends where the player stopped. Without the cap the replay
+      // runs past it and reports a different end tick for a run that never
+      // diverged.
+      maxTicks: Math.max(recording.endTick, 1),
+      checkpointEvery: recording.tickHz,
+      counters: loaded.MANIFEST.counters,
     })
-    let out = ""
-    let err = ""
-    child.stdout.on("data", (chunk: Buffer) => {
-      out += chunk.toString()
-    })
-    child.stderr.on("data", (chunk: Buffer) => {
-      err += chunk.toString()
-    })
-    child.on("error", reject)
-    child.on("close", (code) => {
-      if (code !== 0) {
-        reject(new Error(`the replay exited ${code}:\n${err.trim()}`))
-        return
-      }
-      resolve(JSON.parse(out) as Replayed)
-    })
-    child.stdin.write(payload)
-    child.stdin.end()
-  })
+    return {
+      endTick: replayed.endTick,
+      terminal: replayed.terminal,
+      counters: replayed.counters,
+      comparison: compareToRecording(recording, replayed),
+    }
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
 }
 
 /** Forgets every path the frame origin was asked for, for this subject. */
