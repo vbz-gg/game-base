@@ -157,9 +157,28 @@ describe("the engine update", () => {
 
   test("it bumps through the script rather than by hand", () => {
     expect(workflow).toContain("scripts/bump-engine.ts")
-    // The registry is what it asks, so a release cut any way at all reaches
-    // it, including one published from a laptop.
+  })
+
+  /**
+   * Two triggers, and neither is redundant. The dispatch makes a release
+   * arrive in seconds; the daily check is what makes a missing or expired
+   * token a delay rather than a miss, and it is the only one that catches a
+   * version published from a laptop.
+   */
+  test("a dispatch is the fast path and the daily check is the backstop", () => {
+    expect(workflow).toContain("repository_dispatch")
+    expect(workflow).toContain("engine-released")
+    expect(workflow).toContain("cron:")
+    // The registry decides either way, so a dispatch cannot name a version
+    // npm does not have.
     expect(workflow).toContain("npm view @clockwork2/engine version")
+    expect(workflow).toContain("client_payload.version")
+  })
+
+  /** One release must not become one pull request per trigger. */
+  test("it opens one pull request per engine release", () => {
+    expect(workflow).toContain("gh pr list --head")
+    expect(workflow).toContain('branch="engine/')
   })
 
   /**
@@ -172,11 +191,5 @@ describe("the engine update", () => {
     expect(workflow).toContain("bun run test:coverage")
     expect(workflow).toContain("gh pr create")
     expect(workflow).toContain("carries no checks of its own")
-  })
-
-  /** One run a day must not open one pull request a day for one release. */
-  test("it opens one pull request per engine release", () => {
-    expect(workflow).toContain("gh pr list --head")
-    expect(workflow).toContain('branch="engine/')
   })
 })

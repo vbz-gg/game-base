@@ -2,21 +2,31 @@ name: Engine update
 
 # Opens a pull request when clockwork2 publishes a new @clockwork2/engine.
 #
-# It asks the registry rather than listening to clockwork2. A repository
-# dispatch from there would need a token with write access to this one, which
-# is the sort of long-lived credential the release workflow exists to avoid,
-# and it would only fire for a release cut that particular way. The registry is
-# the thing this package actually depends on, so asking it catches a release
-# however it was published - from the workflow, or from somebody's laptop.
+# Two triggers, and they are not redundant.
 #
-# What it cannot do is give its own pull request a CI run. A pull request
-# opened with GITHUB_TOKEN starts no workflow, so the checks a reviewer looks
-# for never appear on it. The gate therefore runs here, before the pull request
-# is opened, and the result goes in the body with a link to this run. A red
-# gate still opens the pull request: "the new engine breaks us" is the most
-# useful version of this notification, not a reason to stay quiet.
+# clockwork2's release workflow sends a repository dispatch as its last step,
+# so an engine release reaches here in seconds rather than by the next morning.
+# That needs a token with Contents: write on this repository, which lives in
+# the organisation's secrets as ENGINE_RELEASED_TOKEN. It is the only
+# long-lived credential either repository has, and it is scoped to one
+# permission on one repository - unlike the npm token that trusted publishing
+# exists to avoid, which could publish anything.
+#
+# The daily check is the backstop, and it is what makes the token's absence a
+# delay rather than a failure. It catches a release published from somebody's
+# laptop, a dispatch step that failed, a token that expired, and a version
+# yanked and republished. A dispatch that arrives is a fast path onto the same
+# job, and the branch-per-version check below is what keeps two triggers from
+# opening two pull requests for one release.
+#
+# The registry is the authority either way. A dispatch carries the version
+# clockwork2 says it published, and this confirms it against npm before using
+# it - with a short retry, because npm's read replicas lag a publish by
+# minutes and a dispatch arrives immediately.
 
 on:
+  repository_dispatch:
+    types: [engine-released]
   schedule:
     # Daily, a few minutes off the hour so it does not land with everything
     # else the platform runs at :00.
@@ -27,6 +37,12 @@ env:
   # Who gets the pull request. One line to change, and the only place a person
   # is named in this repository's automation.
   REVIEWER: hiddentao
+  # A pull request opened with GITHUB_TOKEN starts no workflow, so it carries
+  # no checks. Opened with the organisation's token it is an ordinary pull
+  # request and CI runs on it. Without the secret this falls back and the gate
+  # below is the only signal, which is why it runs here at all.
+  PR_TOKEN: ${{ secrets.ENGINE_RELEASED_TOKEN || github.token }}
+  PR_HAS_CHECKS: ${{ secrets.ENGINE_RELEASED_TOKEN != '' }}
 
 jobs:
   update:
@@ -43,11 +59,35 @@ jobs:
         with:
           node-version: 22
 
-      - name: What the registry has
+      - name: Which version to move to
         id: engine
+        env:
+          # Empty unless a dispatch put it there. Confirmed against the
+          # registry below rather than trusted: whoever can dispatch can say
+          # anything, and a version npm does not have would fail at install
+          # with an error about a lockfile rather than about a release.
+          CLAIMED: ${{ github.event.client_payload.version }}
         run: |
           set -euo pipefail
-          latest="$(npm view @clockwork2/engine version)"
+          latest=""
+          if [ -n "${CLAIMED:-}" ]; then
+            # npm answers a version it does not have with a non-zero exit, and
+            # a publish takes minutes to reach every read replica. Two minutes
+            # of retries covers the lag without turning a wrong claim into a
+            # long wait.
+            for attempt in 1 2 3 4 5 6; do
+              if npm view "@clockwork2/engine@$CLAIMED" version >/dev/null 2>&1; then
+                latest="$CLAIMED"
+                echo "dispatch claimed $CLAIMED, and the registry has it"
+                break
+              fi
+              echo "the registry does not have $CLAIMED yet (attempt $attempt)"
+              sleep 20
+            done
+          fi
+          if [ -z "$latest" ]; then
+            latest="$(npm view @clockwork2/engine version)"
+          fi
           current="$(node -p "require('./package.json').devDependencies['@clockwork2/engine']")"
           echo "latest=$latest" >> "$GITHUB_OUTPUT"
           echo "current=$current" >> "$GITHUB_OUTPUT"
@@ -103,7 +143,7 @@ jobs:
       - name: Open the pull request
         if: steps.engine.outputs.changed == 'true' && steps.existing.outputs.open == 'false'
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ env.PR_TOKEN }}
           BRANCH: ${{ steps.existing.outputs.branch }}
           FROM: ${{ steps.engine.outputs.current }}
           TO: ${{ steps.engine.outputs.latest }}
@@ -135,6 +175,12 @@ jobs:
             verdict="**The gate failed on the bumped tree.** That is the finding: this engine release changes something this package depends on."
           fi
 
+          if [ "$PR_HAS_CHECKS" = "true" ]; then
+            checks="Opened with the organisation's token, so CI runs on this like any other pull request."
+          else
+            checks="GitHub starts no workflow for a pull request opened with \`GITHUB_TOKEN\`, so this one carries no checks of its own. Pushing any commit to the branch gives it real ones."
+          fi
+
           gh pr create \
             --base "${GITHUB_REF_NAME}" \
             --head "$BRANCH" \
@@ -146,7 +192,7 @@ jobs:
 
           [The run that opened this]($run)
 
-          GitHub starts no workflow for a pull request opened with \`GITHUB_TOKEN\`, so this one carries no checks of its own. Pushing any commit to the branch gives it real ones.
+          $checks
           BODY
           )"
 
@@ -154,6 +200,6 @@ jobs:
         if: steps.engine.outputs.changed == 'true' && steps.existing.outputs.open == 'false'
         continue-on-error: true
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ env.PR_TOKEN }}
           BRANCH: ${{ steps.existing.outputs.branch }}
         run: gh pr edit "$BRANCH" --add-reviewer "$REVIEWER" --add-assignee "$REVIEWER"

@@ -203,12 +203,31 @@ next such file gets caught.
 
 ## Following the engine
 
-`.github/workflows/engine-update.yml` asks the registry once a day whether
-`@clockwork2/engine` has a newer release, and opens a pull request when it
-does. It asks the registry rather than listening to clockwork2: a dispatch
-from there would need a long-lived token with write access here, which is the
-thing trusted publishing exists to avoid, and it would only fire for a release
-cut that particular way.
+`.github/workflows/engine-update.yml` opens a pull request when
+`@clockwork2/engine` has a newer release. Two triggers reach it, and they are
+not redundant.
+
+clockwork2's release workflow dispatches an `engine-released` event as its
+last step, so a release arrives here in seconds. That needs a token with
+Contents: write on this repository, `ENGINE_RELEASED_TOKEN` in the
+organisation's secrets. It is the only long-lived credential either repository
+has, and it is a much smaller thing than the npm token trusted publishing
+removed: scoped to one permission on one repository, where the worst it can do
+is open a pull request.
+
+The daily check is the backstop, and it is what makes the token's absence a
+delay rather than a failure. It catches a release published from somebody's
+laptop, a dispatch step that failed, a token that expired, and a version
+yanked and republished. Both triggers reach the same job, and the
+branch-per-version check is what stops two of them opening two pull requests
+for one release.
+
+The registry is the authority either way. A dispatch carries the version
+clockwork2 says it published and the job confirms it against npm before using
+it, with a short retry: npm's read replicas lag a publish by minutes and a
+dispatch arrives immediately. A claim npm never confirms falls back to
+whatever npm does say is latest, so a wrong one costs two minutes and changes
+nothing.
 
 The bump itself is `scripts/bump-engine.ts`, which moves the version in all six
 places it is written - the root's pin, the peer range, the template's own
@@ -217,12 +236,16 @@ dependency, the kernel version each example manifest declares, and the range
 hold what it expected. Raising the range is still a deliberate act: the pull
 request is where it is decided, not the merge.
 
-**That pull request has no checks of its own.** GitHub starts no workflow for a
-pull request opened with `GITHUB_TOKEN`, so the gate runs in the job that opens
-it and the result goes in the body with a link to the run. A failing gate still
-opens the pull request, because "the new engine breaks us" is the most useful
-form this notification takes. Pushing any commit to the branch gives it real
-checks.
+**Whether that pull request has checks depends on which token opened it.**
+GitHub starts no workflow for one opened with `GITHUB_TOKEN`, so without the
+organisation's secret the pull request carries none and the body says so.
+Opened with `ENGINE_RELEASED_TOKEN` it is an ordinary pull request and CI runs
+on it.
+
+Either way the gate runs in the job that opens it and the result goes in the
+body with a link to the run, because that is the only signal in the first
+case. A failing gate still opens the pull request: "the new engine breaks us"
+is the most useful form this notification takes.
 
 ## Commit gates
 
