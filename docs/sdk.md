@@ -299,7 +299,7 @@ would let a game hold two copies on two versions and have the halves of that
 contract disagree at runtime, which surfaces as a protocol error and never as
 an install problem.
 
-The range is `>=0.7.2 <0.8.0` rather than open-ended. clockwork2 is 0.x and
+The range is `>=0.7.3 <0.8.0` rather than open-ended. clockwork2 is 0.x and
 maps a breaking change to a minor, so `0.7.0` may move the very things this
 package is about: `inputs.controls` arrived in a minor, and so did pointer
 identity. Each engine minor is a deliberate bump here.

@@ -34,7 +34,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
-    "@clockwork2/engine": "0.7.2",
+    "@clockwork2/engine": "0.7.3",
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
     "@happy-dom/global-registrator": "^20.14.5",
