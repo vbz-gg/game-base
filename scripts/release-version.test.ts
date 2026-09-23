@@ -119,6 +119,25 @@ describe("the release workflow", () => {
   })
 
   /**
+   * A release tells the arcade, and never fails because it could not. By the
+   * time that step runs the version is published, tagged and announced, so a
+   * missing or expired token must not turn a release that worked into a red
+   * run - and the arcade polls the registry daily, which is what makes that a
+   * delay rather than a miss.
+   */
+  test("it tells the arcade, best-effort", () => {
+    const step = workflow.slice(workflow.indexOf("- name: Tell the arcade"))
+    expect(step).toContain("event_type=game-base-released")
+    // GITHUB_TOKEN cannot dispatch to another repository.
+    expect(step).toContain("secrets.ENGINE_RELEASED_TOKEN")
+    expect(step).toContain("continue-on-error: true")
+    // It reads the version after the bump, so it names what was published.
+    expect(step).toContain("packages/game-base/package.json")
+    // And it says so when the token is not there, rather than failing.
+    expect(step).toContain("the arcade's daily check will pick this up")
+  })
+
+  /**
    * No majors, in the one place somebody would reach for one. The test above
    * holding the version at 0 is the backstop; this is the door.
    */
