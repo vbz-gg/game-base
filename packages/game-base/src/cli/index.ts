@@ -12,10 +12,14 @@
 
 import { mkdir, rm, writeFile } from "node:fs/promises"
 import { join } from "node:path"
-import { buildGameArtifacts, type GameSource } from "../build"
-import { DEFAULT_FRAME_PORT, DEFAULT_HOST_PORT, startHarness } from "../harness"
-import { type Options, parseArgs } from "./args"
-import { readManifestFromSim } from "./manifest"
+import { buildGameArtifacts, type GameSource } from "../build/index.js"
+import {
+  DEFAULT_FRAME_PORT,
+  DEFAULT_HOST_PORT,
+  startHarness,
+} from "../harness/index.js"
+import { type Options, parseArgs } from "./args.js"
+import { readManifestFromSim } from "./manifest.js"
 
 const USAGE = `game-base - build and run a game the vbz arcade can take
 

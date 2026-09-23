@@ -14,7 +14,7 @@
  * was uploaded, because it never trusts how something was built.
  */
 
-import { refuse } from "./errors"
+import { refuse } from "./errors.js"
 
 /**
  * The one name a frame bundle may use for its simulation.

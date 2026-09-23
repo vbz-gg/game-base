@@ -12,12 +12,13 @@
  * server that does not exist.
  */
 
+import { existsSync } from "node:fs"
 import { readFile } from "node:fs/promises"
 import { join } from "node:path"
-import type { GameSource } from "../build"
-import { type BuiltGame, buildAndAddress } from "./artifacts"
-import { harnessPage } from "./page/document"
-import { startFrameServer, startHostServer } from "./servers"
+import type { GameSource } from "../build/index.js"
+import { type BuiltGame, buildAndAddress } from "./artifacts.js"
+import { harnessPage } from "./page/document.js"
+import { startFrameServer, startHostServer } from "./servers.js"
 
 export interface HarnessOptions {
   readonly source: GameSource
@@ -121,11 +122,30 @@ async function readManifest(root: string): Promise<HarnessManifest> {
   }
 }
 
+/**
+ * The page script's own entry, wherever this module is running from.
+ *
+ * In this repository that is `page/main.ts` beside the source. In an installed
+ * copy it is `page/main.js` in `dist`, because `tsc` compiles TypeScript and
+ * does not copy it - so a hard-coded `.ts` builds nothing on every machine but
+ * this one, and the harness fails at start with the bundler's error rather
+ * than anything naming the cause.
+ *
+ * The directory is a parameter so the resolution can be tested against a tree
+ * that holds one spelling or neither, rather than only against this one.
+ */
+export function harnessPageEntry(dir = join(import.meta.dir, "page")): string {
+  for (const name of ["main.ts", "main.js"]) {
+    const candidate = join(dir, name)
+    if (existsSync(candidate)) return candidate
+  }
+  throw new Error(`the harness page's entry is missing from ${dir}`)
+}
+
 /** The parent page's script, bundled for the browser at start. */
 async function bundlePage(): Promise<string> {
-  const entry = join(import.meta.dir, "page", "main.ts")
   const result = await Bun.build({
-    entrypoints: [entry],
+    entrypoints: [harnessPageEntry()],
     target: "browser",
     format: "esm",
     minify: false,
@@ -144,11 +164,11 @@ export {
   type BuiltGame,
   blobKeys,
   buildAndAddress,
-} from "./artifacts"
-export { harnessPage } from "./page/document"
+} from "./artifacts.js"
+export { harnessPage } from "./page/document.js"
 export {
   type RunningHostServer,
   type RunningServer,
   startFrameServer,
   startHostServer,
-} from "./servers"
+} from "./servers.js"

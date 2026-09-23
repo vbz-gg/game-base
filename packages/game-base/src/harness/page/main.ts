@@ -17,7 +17,7 @@ import {
   isControlScheme,
   type MountedControls,
   mountControls,
-} from "../../controls"
+} from "../../controls/index.js"
 
 interface HarnessConfig {
   readonly frameOrigin: string

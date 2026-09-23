@@ -69,6 +69,21 @@ way for a press to end means adding a sixth release.
 decide which control was pressed and hand the answer over is the hole the
 custom path exists to close.
 
+## Publishing what a consumer can actually use
+
+**Every relative import inside `packages/game-base/src` carries `.js`**, and a
+directory import carries the whole `/index.js`. `tsc` emits a relative
+specifier exactly as the source wrote it, and node ESM has no extension
+resolution, so `from "./schemes"` runs everywhere in this repository and
+nowhere under plain node.
+
+`bun run check:publishable` packs the tarball and imports every subpath the
+exports map names with plain node, which is the only check that sees this. It
+also asserts the files the package reads at runtime rather than imports are in
+the tarball - `RUNTIME_FILES` in the script - because the harness bundles its
+page script from a path built off `import.meta.dir`, and nothing importing the
+package would notice that file missing.
+
 ## Tests
 
 - Add a test for a concrete failure mode. A test that restates the

@@ -16,7 +16,7 @@ import {
   MAX_FRAME_BYTES,
   MAX_SIM_BYTES,
   SIM_SPECIFIER,
-} from "./contract"
+} from "./contract.js"
 
 export interface GameSource {
   /** Absolute path to the game directory. */

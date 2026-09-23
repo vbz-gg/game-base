@@ -8,6 +8,7 @@
  */
 
 import { afterAll, beforeAll, describe, expect, test } from "bun:test"
+import { existsSync } from "node:fs"
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
@@ -21,6 +22,7 @@ import {
   DEFAULT_HOST_PORT,
   HARNESS_SEED,
   type Harness,
+  harnessPageEntry,
   startHarness,
 } from "../../src/harness"
 import { startHostServer } from "../../src/harness/servers"
@@ -191,6 +193,39 @@ describe("the harness, started whole", () => {
     } finally {
       await rm(bare, { recursive: true, force: true })
     }
+  })
+})
+
+describe("the page script the harness bundles at start", () => {
+  /**
+   * The path is built from `import.meta.dir`, so it resolves to the
+   * TypeScript here and has to resolve to the compiled file in an installed
+   * copy - `tsc` compiles TypeScript and does not copy it. Hard-coding `.ts`
+   * builds nothing anywhere but this repository, and the failure arrives when
+   * somebody runs `game-base dev` rather than when anything is imported.
+   */
+  test("its entry is a file that exists, whichever tree this is", () => {
+    const entry = harnessPageEntry()
+    expect(existsSync(entry)).toBe(true)
+    expect(entry.endsWith("main.ts") || entry.endsWith("main.js")).toBe(true)
+  })
+
+  test("a compiled tree resolves to the compiled file", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "game-base-page-"))
+    try {
+      await writeFile(join(dir, "main.js"), "export const a = 1\n")
+      expect(harnessPageEntry(dir).endsWith("main.js")).toBe(true)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test("a tree with neither says so, rather than handing back a path", () => {
+    // The bundler's own error for a missing entry names a path and not a
+    // cause, which is a bad half hour for whoever installed the package.
+    expect(() => harnessPageEntry("/nowhere/that/exists")).toThrow(
+      /harness page's entry is missing/,
+    )
   })
 })
 

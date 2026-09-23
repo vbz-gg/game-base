@@ -8,7 +8,7 @@
  */
 
 import { resolve } from "node:path"
-import { DEFAULT_FRAME_PORT, DEFAULT_HOST_PORT } from "../harness"
+import { DEFAULT_FRAME_PORT, DEFAULT_HOST_PORT } from "../harness/index.js"
 
 export const DEFAULT_SIM_ENTRY = "src/sim/index.ts"
 export const DEFAULT_FRAME_ENTRY = "src/frame.ts"

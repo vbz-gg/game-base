@@ -20,8 +20,8 @@ import {
   createBlobServer,
   frameCsp,
   frameDocument,
-} from "../serve"
-import { type BuiltGame, blobKeys } from "./artifacts"
+} from "../serve/index.js"
+import { type BuiltGame, blobKeys } from "./artifacts.js"
 
 export interface FrameServerOptions {
   readonly port: number

@@ -10,7 +10,7 @@ export {
   buildGameArtifacts,
   type GameArtifacts,
   type GameSource,
-} from "./build"
+} from "./build.js"
 export {
   assertFrameImportsOnlySim,
   assertRewritten,
@@ -24,10 +24,10 @@ export {
   SIM_PATH,
   SIM_SPECIFIER,
   simPathFor,
-} from "./contract"
-export { sha256Hex } from "./digest"
+} from "./contract.js"
+export { sha256Hex } from "./digest.js"
 export {
   BUILD_REFUSAL,
   BuildRefusal,
   type BuildRefusalCode,
-} from "./errors"
+} from "./errors.js"

@@ -11,7 +11,7 @@ export {
   MIN_TOUCH_PX,
   type MountedControls,
   mountControls,
-} from "./render"
+} from "./render.js"
 export {
   boundSlots,
   CONTROL_SCHEMES,
@@ -21,4 +21,4 @@ export {
   type Scheme,
   type SchemeSlot,
   unknownSlots,
-} from "./schemes"
+} from "./schemes.js"

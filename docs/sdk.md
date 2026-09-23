@@ -261,6 +261,20 @@ or the harness. The arcade has a bundle guard with a list of names its shell
 may not pull in, and game-base's server-side names join it when the arcade
 takes this dependency.
 
+Every relative import inside `src/` carries `.js`, and a directory import
+carries the whole `/index.js`. `tsc` emits a relative specifier exactly as the
+source wrote it and node ESM has no extension resolution, so `from "./schemes"`
+builds, typechecks and passes the whole suite under bun and then fails on a
+consumer's first `import` with ERR_MODULE_NOT_FOUND. `bun run check:publishable`
+is what catches the next one: it packs the tarball and imports every subpath the
+exports map names with plain node.
+
+The same check covers a file the package **reads** rather than imports. The
+harness bundles its page script when it starts, from a path built off
+`import.meta.dir`, which resolves to the TypeScript here and has to resolve to
+the compiled file in an installed copy. Nothing that imports the package would
+notice its absence; the failure would arrive when somebody ran `game-base dev`.
+
 `@clockwork2/engine` is a **peer** dependency. A game installs the engine
 itself - its simulation and its frame both import it - and the manifest, the
 recording format and the parent-frame protocol are a contract between the

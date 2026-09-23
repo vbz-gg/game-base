@@ -19,7 +19,7 @@ import {
   rewriteSimImport,
   sha256Hex,
   simPathFor,
-} from "../build"
+} from "../build/index.js"
 
 export interface BuiltGame {
   readonly sim: Uint8Array

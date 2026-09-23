@@ -13,7 +13,7 @@
  * an ordinary module with no inline code.
  */
 
-import { escapeHtml } from "../../serve"
+import { escapeHtml } from "../../serve/index.js"
 
 export interface HarnessPageInput {
   readonly title: string

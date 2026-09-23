@@ -13,10 +13,10 @@ export {
   type BlobReader,
   createBlobServer,
   JS_CONTENT_TYPE,
-} from "./blobs"
+} from "./blobs.js"
 export {
   escapeHtml,
   type FrameDocumentInput,
   frameCsp,
   frameDocument,
-} from "./document"
+} from "./document.js"
