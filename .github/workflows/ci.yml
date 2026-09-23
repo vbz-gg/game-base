@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.11
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+      - run: bun run build
+      - run: bun run typecheck
+      # The coverage floor, not just the tests. scripts/check-coverage.ts
+      # reads coverage/lcov.info and holds the aggregate; bunfig.toml says
+      # why no threshold lives there.
+      - run: bun run test:coverage
+      # Packs the package and reads the tarball's own package.json. The
+      # manifest on disk is what ships, so a missing README or a dependency
+      # that crept in is caught here rather than by whoever installs it.
+      - run: bun run check:publishable

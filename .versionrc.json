@@ -1,0 +1,21 @@
+{
+  "packageFiles": ["package.json"],
+  "bumpFiles": ["package.json", "packages/game-base/package.json"],
+  "infile": "CHANGELOG.md",
+  "tagPrefix": "v",
+  "scripts": {
+    "prerelease": "bun run lint && bun run build && bun run typecheck && bun run test:coverage && bun run check:publishable"
+  },
+  "types": [
+    { "type": "feat", "section": "Features" },
+    { "type": "fix", "section": "Bug Fixes" },
+    { "type": "perf", "section": "Performance" },
+    { "type": "refactor", "section": "Refactoring" },
+    { "type": "docs", "section": "Documentation" },
+    { "type": "test", "section": "Tests" },
+    { "type": "build", "section": "Build System" },
+    { "type": "ci", "section": "CI" },
+    { "type": "chore", "hidden": true },
+    { "type": "style", "hidden": true }
+  ]
+}

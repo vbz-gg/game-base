@@ -1,0 +1,38 @@
+# Coverage settings for `bun test --coverage`.
+#
+# None of this affects `bun run test`, which does not pass --coverage. The
+# everyday command stays as fast as it was; the gate is `bun run test:coverage`.
+
+[test]
+coverageSkipTestFiles = true
+coverageReporter = ["text", "lcov"]
+coverageDir = "coverage"
+
+# What is measured is `packages/*/src`. Everything below is either not the
+# code under test or cannot be measured in process.
+#
+# fixtures/ holds small games the harness and the browser suite drive. They
+# are inputs rather than code under test, and how much of one runs says
+# nothing about this package.
+#
+# e2e is the Playwright suite and scripts is the repository's own tooling.
+coveragePathIgnorePatterns = [
+  "packages/*/dist/**",
+  "fixtures/**",
+  "templates/**",
+  "e2e/**",
+  "scripts/**",
+]
+
+# No `coverageThreshold` here on purpose, and adding one back is a mistake.
+#
+# Two reasons, both measured on bun 1.3.11. Bun applies it per file rather
+# than to the `All files` row, so 0.99 here would demand 99% of every file,
+# which for a file under a hundred executable lines means 100%. And the keys
+# have to be plural: the singular `line` and `function` are accepted, ignored
+# and never fire, so a run at 33% exits 0 while reading as a gate.
+#
+# The floor lives in scripts/check-coverage.ts, which reads coverage/lcov.info
+# and holds the aggregate to 99% of lines. A failure there prints the
+# shortfall in lines and the worst files, rather than one line about whichever
+# file bun happened to check first.

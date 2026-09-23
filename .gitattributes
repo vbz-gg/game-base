@@ -1,0 +1,5 @@
+# The working tree holds the same bytes on every platform, so a Windows
+# checkout cannot change what a test compares. Nothing here is hashed today,
+# but the harness serves built bundles whose byte counts the tests assert, and
+# a CRLF rewrite would move them.
+* text=auto eol=lf

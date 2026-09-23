@@ -1,0 +1,46 @@
+{
+  "name": "game-base",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The SDK for building games the vbz arcade can run",
+  "license": "MIT",
+  "author": "Ramesh Nair",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vbz-gg/game-base.git"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf packages/*/dist packages/*/*.tsbuildinfo coverage e2e/test-results e2e/playwright-report",
+    "typecheck": "tsc -b && tsc -p tsconfig.tests.json",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "test": "bun test packages/ scripts/",
+    "test:coverage": "bun test --coverage packages/ scripts/ && bun run scripts/check-coverage.ts",
+    "test:e2e": "bun run --cwd e2e test",
+    "check:publishable": "bun run scripts/check-publishable.ts",
+    "prepare": "husky",
+    "release": "commit-and-tag-version",
+    "release:minor": "commit-and-tag-version --release-as minor"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.14",
+    "@clockwork2/engine": "0.4.0",
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@happy-dom/global-registrator": "^20.14.5",
+    "@types/bun": "^1.2.21",
+    "commit-and-tag-version": "^12.6.0",
+    "husky": "^9.1.7",
+    "playwright": "1.56.1",
+    "typescript": "5.9.3"
+  }
+}
