@@ -23,12 +23,13 @@ What a game author does with it is in
 ## Layout
 
 ```
-packages/game-base/   the published package
-docs/sdk.md           how it works, from first principles
-templates/game/       a game that takes a scheme, to copy and start from
-fixtures/paddle/      a small game that draws its own controls instead
-e2e/                  the browser suite, driving the harness for real
-scripts/              this repository's own tooling
+packages/game-base/             the published package
+packages/game-base/templates/   a game to copy and start from, shipped with it
+skill/arcade-game/              the agent skill for building one
+docs/sdk.md                     how it works, from first principles
+fixtures/paddle/                a small game that draws its own controls
+e2e/                            the browser suite, driving the harness for real
+scripts/                        this repository's own tooling
 ```
 
 ## Commands

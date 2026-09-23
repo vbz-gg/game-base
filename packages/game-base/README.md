@@ -9,11 +9,30 @@ arcade - the on-screen controls, the two artifacts an upload carries, and a
 harness that frames your game locally the way the arcade frames it.
 
 ```bash
-bun add -d @vbz-gg/game-base
+bunx @vbz-gg/game-base new ./my-game
+cd ./my-game && bun install
+bun run dev
 ```
+
+That copy builds and plays before a line of it is changed, so anything that
+breaks afterwards is something you just did. Its id comes from the directory
+name and is immutable once published.
 
 `@clockwork2/engine` is a peer dependency, so your game installs one copy of
 the engine rather than two.
+
+## The three commands
+
+```bash
+game-base new   <dir>   copy a game that already conforms, and rename it
+game-base build <dir>   write dist/sim.js, dist/frame.js and dist/manifest.json
+game-base dev   <dir>   serve the game on two origins, the way the arcade does
+```
+
+`dev` is the arcade's play view on your laptop: the game in a sandboxed frame
+on one origin, the page that frames it on another, and the pad your manifest
+asked for drawn over it. A scheme picker switches layouts without editing the
+manifest, and ending a run publishes its recording.
 
 ## On-screen controls
 

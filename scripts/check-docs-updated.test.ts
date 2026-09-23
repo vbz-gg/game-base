@@ -34,7 +34,7 @@ describe("bearing paths", () => {
       "scripts/check-coverage.ts",
       "skill/arcade-game/SKILL.md",
       "docs/sdk.md",
-      "templates/game/src/sim/manifest.ts",
+      "packages/game-base/templates/game/src/sim/manifest.ts",
       "fixtures/paddle/src/sim/index.ts",
       "README.md",
       "package.json",

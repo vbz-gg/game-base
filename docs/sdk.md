@@ -31,6 +31,10 @@ So game-base owns four things, one per subpath export:
 | `/serve` | The frame document, its CSP, and the routes the artifacts are fetched from |
 | `/harness` | Both of those, wired into a local two-origin play view |
 
+Beside them the package ships a CLI (`game-base new | build | dev`), the
+template `new` copies, and `skill/arcade-game/`, which is the same material
+written for an agent to follow literally.
+
 The arcade imports the first three. An author runs the fourth.
 
 ## Controls
@@ -219,6 +223,18 @@ reader to the wrong layer.
 Both artifacts are immutable by construction, so they are served
 `public, max-age=31536000, immutable`. The document is `no-store`, because it
 names an artifact by hash and a rebuild changes that hash.
+
+## Starting a game
+
+`game-base new ./my-game` copies the template out of the package and renames
+it: the game's id comes from the directory, because an id is immutable once
+published and a placeholder somebody forgets is a board under the wrong name.
+The copy builds and plays before anything is changed, so an author's first
+failure is one they caused.
+
+The template ships inside the package rather than beside it in this
+repository, at the same path relative to the CLI in the source tree and in
+`dist`, which is what lets an installed copy find it.
 
 ## The harness
 

@@ -125,14 +125,23 @@ export async function unimportableSubpaths(
 /**
  * Files the package reads at runtime rather than imports.
  *
- * The harness bundles its own page script when it starts, from a path it
- * builds off `import.meta.dir`. In this repository that resolves to the
+ * Two kinds. The harness bundles its own page script when it starts, from a
+ * path built off `import.meta.dir`: in this repository that resolves to the
  * TypeScript beside the source and in an installed copy it has to resolve to
- * the compiled file, which only ships if `tsc` emitted it. Nothing importing
- * the package would notice: the failure arrives when somebody runs
- * `game-base dev`.
+ * the compiled file, which only ships if `tsc` emitted it. And `game-base
+ * new` copies the template out of the package, which only works if the
+ * template is in the tarball.
+ *
+ * Nothing that imports the package would notice either one missing. The
+ * failure arrives when somebody runs a command.
  */
-export const RUNTIME_FILES: readonly string[] = ["dist/harness/page/main.js"]
+export const RUNTIME_FILES: readonly string[] = [
+  "dist/harness/page/main.js",
+  "templates/game/package.json",
+  "templates/game/gitignore",
+  "templates/game/src/sim/index.ts",
+  "templates/game/src/frame.ts",
+]
 
 /** Reads the package.json a tarball would carry, not the one on disk. */
 export async function pack(pkg: string, into: string): Promise<Shipped> {

@@ -30,7 +30,8 @@ coveragePathIgnorePatterns = [
   # left out, so that it is a decision rather than a file nobody loaded.
   "packages/game-base/src/harness/page/main.ts",
   "fixtures/**",
-  "templates/**",
+  "packages/game-base/templates/**",
+  "skill/**",
   "e2e/**",
   "scripts/**",
   # The template and the fixture, built to a temp directory and loaded by the

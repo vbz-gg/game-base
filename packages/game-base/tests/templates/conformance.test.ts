@@ -24,7 +24,10 @@ const ROOT = join(import.meta.dir, "..", "..", "..", "..")
 
 /** Every subject the repository ships, and what each one is for. */
 const SUBJECTS = [
-  { name: "the scheme template", dir: join(ROOT, "templates", "game") },
+  {
+    name: "the scheme template",
+    dir: join(ROOT, "packages", "game-base", "templates", "game"),
+  },
   { name: "the paddle fixture", dir: join(ROOT, "fixtures", "paddle") },
 ] as const
 
