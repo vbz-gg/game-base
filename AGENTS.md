@@ -160,15 +160,40 @@ under plain node.
 
 Patch and minor only. **No major releases for now**, here, in clockwork2 or in
 the arcade. On a 0.x version commit-and-tag-version maps a breaking change to a
-minor, so `bun run release` cannot reach 1.0.0 on its own, and there is no
-`release:major` script. `scripts/release-version.test.ts` holds the major at 0,
-so lifting the policy means deleting a test in a diff somebody reads.
+minor, so `bun run release` cannot reach 1.0.0 on its own, there is no
+`release:major` script, and the workflow's bump offers no major either.
+`scripts/release-version.test.ts` holds the major at 0, so lifting the policy
+means deleting a test in a diff somebody reads.
 
-Publishing is npm Trusted Publishing, as clockwork2 does it: no `NPM_TOKEN`,
-and npm signs a provenance attestation naming the commit and the workflow.
-A trusted publisher cannot be configured for a package that does not exist, so
-**the first version is published from a laptop** and the publisher configured
-afterwards.
+**A release is one dispatch of `release.yml`.** Pick `patch` or `minor`, leave
+the dry-run box unticked, and the job does the rest: it runs the gate CI runs,
+bumps the version, pushes the bump commit, rebuilds `dist` at the version being
+published, publishes, and creates the tag and the GitHub release at the commit
+it bumped. The release body is that version's own `CHANGELOG.md` section, so
+the notes are the changelog rather than a second description of the same
+commits.
+
+The filename is the configuration. npm's trusted publisher is set up against
+this repository and `release.yml` by name, so renaming the file revokes the
+credential: the next release fails at the OIDC exchange rather than at a test.
+There is no `NPM_TOKEN` here and nothing to rotate.
+
+Every guard in that job is a mistake clockwork2 made and paid for, and each is
+held by `scripts/release-version.test.ts` because a workflow cannot be unit
+tested:
+
+- **A dispatch bumps.** It used to publish whatever version the tree held, so
+  a dispatch after a merge found that version on the registry, skipped, and
+  reported success having released nothing.
+- **The checkout is `fetch-depth: 0`.** commit-and-tag-version reads the
+  commits since the most recent tag, and a shallow clone has none: it compared
+  from the wrong tag and re-listed a release's worth of commits that had
+  already shipped.
+- **It rebuilds after the bump**, because `dist` is what the tarball carries.
+- **It refuses a tree with nothing new since the last tag**, and
+  `scripts/release-notes.ts` throws on an empty changelog section. Between
+  them that is the version whose release body says nothing about itself.
+- **The tag names the bump commit**, not the one the job checked out.
 
 `.versionrc.json`'s `prerelease` hook runs the gate before the version is
 bumped, so it never sees the tree a release actually ships. Anything holding
@@ -176,8 +201,51 @@ the version literal therefore has to be in `bumpFiles`; clockwork2 lost several
 releases to exactly that, and `scripts/release-version.test.ts` is where the
 next such file gets caught.
 
-Raising the engine's peer range is a deliberate act, not maintenance. See the
-last section of `docs/sdk.md` for why it is bounded above.
+## Following the engine
+
+`.github/workflows/engine-update.yml` opens a pull request when
+`@clockwork2/engine` has a newer release. Two triggers reach it, and they are
+not redundant.
+
+clockwork2's release workflow dispatches an `engine-released` event as its
+last step, so a release arrives here in seconds. That needs a token with
+Contents: write on this repository, `ENGINE_RELEASED_TOKEN` in the
+organisation's secrets. It is the only long-lived credential either repository
+has, and it is a much smaller thing than the npm token trusted publishing
+removed: scoped to one permission on one repository, where the worst it can do
+is open a pull request.
+
+The daily check is the backstop, and it is what makes the token's absence a
+delay rather than a failure. It catches a release published from somebody's
+laptop, a dispatch step that failed, a token that expired, and a version
+yanked and republished. Both triggers reach the same job, and the
+branch-per-version check is what stops two of them opening two pull requests
+for one release.
+
+The registry is the authority either way. A dispatch carries the version
+clockwork2 says it published and the job confirms it against npm before using
+it, with a short retry: npm's read replicas lag a publish by minutes and a
+dispatch arrives immediately. A claim npm never confirms falls back to
+whatever npm does say is latest, so a wrong one costs two minutes and changes
+nothing.
+
+The bump itself is `scripts/bump-engine.ts`, which moves the version in all six
+places it is written - the root's pin, the peer range, the template's own
+dependency, the kernel version each example manifest declares, and the range
+`docs/sdk.md` quotes - and throws rather than skipping a file that does not
+hold what it expected. Raising the range is still a deliberate act: the pull
+request is where it is decided, not the merge.
+
+**Whether that pull request has checks depends on which token opened it.**
+GitHub starts no workflow for one opened with `GITHUB_TOKEN`, so without the
+organisation's secret the pull request carries none and the body says so.
+Opened with `ENGINE_RELEASED_TOKEN` it is an ordinary pull request and CI runs
+on it.
+
+Either way the gate runs in the job that opens it and the result goes in the
+body with a link to the run, because that is the only signal in the first
+case. A failing gate still opens the pull request: "the new engine breaks us"
+is the most useful form this notification takes.
 
 ## Commit gates
 

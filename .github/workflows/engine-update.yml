@@ -1,0 +1,205 @@
+name: Engine update
+
+# Opens a pull request when clockwork2 publishes a new @clockwork2/engine.
+#
+# Two triggers, and they are not redundant.
+#
+# clockwork2's release workflow sends a repository dispatch as its last step,
+# so an engine release reaches here in seconds rather than by the next morning.
+# That needs a token with Contents: write on this repository, which lives in
+# the organisation's secrets as ENGINE_RELEASED_TOKEN. It is the only
+# long-lived credential either repository has, and it is scoped to one
+# permission on one repository - unlike the npm token that trusted publishing
+# exists to avoid, which could publish anything.
+#
+# The daily check is the backstop, and it is what makes the token's absence a
+# delay rather than a failure. It catches a release published from somebody's
+# laptop, a dispatch step that failed, a token that expired, and a version
+# yanked and republished. A dispatch that arrives is a fast path onto the same
+# job, and the branch-per-version check below is what keeps two triggers from
+# opening two pull requests for one release.
+#
+# The registry is the authority either way. A dispatch carries the version
+# clockwork2 says it published, and this confirms it against npm before using
+# it - with a short retry, because npm's read replicas lag a publish by
+# minutes and a dispatch arrives immediately.
+
+on:
+  repository_dispatch:
+    types: [engine-released]
+  schedule:
+    # Daily, a few minutes off the hour so it does not land with everything
+    # else the platform runs at :00.
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+env:
+  # Who gets the pull request. One line to change, and the only place a person
+  # is named in this repository's automation.
+  REVIEWER: hiddentao
+  # A pull request opened with GITHUB_TOKEN starts no workflow, so it carries
+  # no checks. Opened with the organisation's token it is an ordinary pull
+  # request and CI runs on it. Without the secret this falls back and the gate
+  # below is the only signal, which is why it runs here at all.
+  PR_TOKEN: ${{ secrets.ENGINE_RELEASED_TOKEN || github.token }}
+  PR_HAS_CHECKS: ${{ secrets.ENGINE_RELEASED_TOKEN != '' }}
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Which version to move to
+        id: engine
+        env:
+          # Empty unless a dispatch put it there. Confirmed against the
+          # registry below rather than trusted: whoever can dispatch can say
+          # anything, and a version npm does not have would fail at install
+          # with an error about a lockfile rather than about a release.
+          CLAIMED: ${{ github.event.client_payload.version }}
+        run: |
+          set -euo pipefail
+          latest=""
+          if [ -n "${CLAIMED:-}" ]; then
+            # npm answers a version it does not have with a non-zero exit, and
+            # a publish takes minutes to reach every read replica. Two minutes
+            # of retries covers the lag without turning a wrong claim into a
+            # long wait.
+            for attempt in 1 2 3 4 5 6; do
+              if npm view "@clockwork2/engine@$CLAIMED" version >/dev/null 2>&1; then
+                latest="$CLAIMED"
+                echo "dispatch claimed $CLAIMED, and the registry has it"
+                break
+              fi
+              echo "the registry does not have $CLAIMED yet (attempt $attempt)"
+              sleep 20
+            done
+          fi
+          if [ -z "$latest" ]; then
+            latest="$(npm view @clockwork2/engine version)"
+          fi
+          current="$(node -p "require('./package.json').devDependencies['@clockwork2/engine']")"
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          if [ "$latest" = "$current" ]; then
+            echo "up to date on $current"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "$current -> $latest"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # A branch per version, so a run that lands while the last pull request
+      # is still open does not open a second one for the same release.
+      - name: Is there already a pull request for it
+        id: existing
+        if: steps.engine.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          branch="engine/${{ steps.engine.outputs.latest }}"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          if [ -n "$(gh pr list --head "$branch" --state all --json number --jq '.[].number')" ]; then
+            echo "there is already a pull request for $branch"
+            echo "open=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "open=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bump it
+        if: steps.engine.outputs.changed == 'true' && steps.existing.outputs.open == 'false'
+        run: |
+          set -euo pipefail
+          bun run scripts/bump-engine.ts "${{ steps.engine.outputs.latest }}"
+          bun install
+
+      # Not `--frozen-lockfile` above, because the bump is what changes the
+      # lockfile. This is the gate a reviewer would otherwise read off the
+      # pull request's checks, and it does not stop the job: a failure is the
+      # finding, and it goes in the body.
+      - name: Would it still pass
+        id: gate
+        if: steps.engine.outputs.changed == 'true' && steps.existing.outputs.open == 'false'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          bun run lint
+          bun run build
+          bun run typecheck
+          bun run test:coverage
+          bun run check:publishable
+
+      - name: Open the pull request
+        if: steps.engine.outputs.changed == 'true' && steps.existing.outputs.open == 'false'
+        env:
+          GH_TOKEN: ${{ env.PR_TOKEN }}
+          BRANCH: ${{ steps.existing.outputs.branch }}
+          FROM: ${{ steps.engine.outputs.current }}
+          TO: ${{ steps.engine.outputs.latest }}
+          GATE: ${{ steps.gate.outcome }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add -A
+          # The hooks are installed by `bun install`, so this message has to
+          # satisfy commitlint and carry the Docs-Updated trailer, exactly as a
+          # hand-written one does. It is true: bump-engine.ts rewrites the
+          # range docs/sdk.md quotes.
+          git commit -q -F - <<MESSAGE
+          build(deps): engine $TO
+
+          Opened by .github/workflows/engine-update.yml, which asks the
+          registry once a day. $FROM -> $TO, and the peer range with it.
+
+          Docs-Updated: sdk.md's peer range is rewritten by scripts/bump-engine.ts
+          MESSAGE
+          git push origin "$BRANCH"
+
+          run="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          if [ "$GATE" = "success" ]; then
+            verdict="The gate passed on the bumped tree: lint, build, typecheck, the coverage floor and the pack check."
+          else
+            verdict="**The gate failed on the bumped tree.** That is the finding: this engine release changes something this package depends on."
+          fi
+
+          if [ "$PR_HAS_CHECKS" = "true" ]; then
+            checks="Opened with the organisation's token, so CI runs on this like any other pull request."
+          else
+            checks="GitHub starts no workflow for a pull request opened with \`GITHUB_TOKEN\`, so this one carries no checks of its own. Pushing any commit to the branch gives it real ones."
+          fi
+
+          gh pr create \
+            --base "${GITHUB_REF_NAME}" \
+            --head "$BRANCH" \
+            --title "build(deps): engine $TO" \
+            --body "$(cat <<BODY
+          \`@clockwork2/engine\` $FROM -> $TO, with the peer range and every other place the version is written, through \`scripts/bump-engine.ts\`.
+
+          $verdict
+
+          [The run that opened this]($run)
+
+          $checks
+          BODY
+          )"
+
+      - name: Ping the reviewer
+        if: steps.engine.outputs.changed == 'true' && steps.existing.outputs.open == 'false'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ env.PR_TOKEN }}
+          BRANCH: ${{ steps.existing.outputs.branch }}
+        run: gh pr edit "$BRANCH" --add-reviewer "$REVIEWER" --add-assignee "$REVIEWER"
