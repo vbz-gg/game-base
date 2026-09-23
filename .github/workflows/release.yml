@@ -1,0 +1,202 @@
+name: Release
+
+# Publishing is npm Trusted Publishing: the job exchanges its OIDC token for a
+# short-lived credential, so there is no long-lived NPM_TOKEN in this
+# repository's secrets and nothing to leak or rotate. The trusted publisher is
+# configured on npmjs.com against this file by name, which is why it is
+# release.yml and why renaming it breaks publishing rather than a test.
+#
+# npm's documented limitation says that for a workflow using workflow_call or
+# workflow_dispatch, "validation checks the calling workflow's name instead of
+# the workflow that actually contains the publish command". A dispatch of this
+# file presents this file as its own workflow_ref, so it ought to match, and
+# clockwork2 measured that it does: 0.3.0 published from a dispatch there and
+# npm signed its provenance. The tag trigger stays anyway, for a tag pushed by
+# hand. The publish step is never reached through workflow_call.
+#
+# The tag and the GitHub release are made by this job rather than pushed ahead
+# of it, so cutting a release is one action and a tag can never name a commit
+# the publish did not come from.
+#
+# A dispatch also bumps the version, and that is the whole point of it.
+# clockwork2 shipped this without the bump: a dispatch published whatever
+# version the tree already held, so a dispatch after a merge found that version
+# on the registry, skipped, and reported success having released nothing. The
+# bump was expected to have been run on somebody's laptop first, and nothing
+# said so or checked.
+
+on:
+  workflow_dispatch:
+    inputs:
+      # Unchecked publishes. The tag trigger below publishes with no box to
+      # tick at all, so a dispatch that needed one to do the same thing was the
+      # odd one out. Tick it to pack and validate without publishing.
+      dry_run:
+        description: Pack and validate without publishing
+        type: boolean
+        default: false
+      # Explicit rather than inferred. commit-and-tag-version reads the
+      # conventional commits since the last tag and on a 0.x version maps a
+      # breaking change to a minor and everything else to a patch, so
+      # "whatever the commits say" can be no change at all when nothing since
+      # the last tag was conventional. A named bump always cuts a version.
+      #
+      # There is no major. Majors are off the table for now, and
+      # scripts/release-version.test.ts fails CI on a 1.0.0 release commit, so
+      # the absence here and the test agree.
+      release_as:
+        description: How far to bump the version
+        type: choice
+        options: [patch, minor]
+        default: patch
+  push:
+    tags: ["v*"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      # contents is write because a dispatch pushes its bump commit to the
+      # default branch and because the last step creates the tag and the
+      # GitHub release. id-token is what trusted publishing needs, and what
+      # makes npm sign a provenance attestation naming the commit and this
+      # workflow.
+      contents: write
+      id-token: write
+    steps:
+      # Full history and every tag. commit-and-tag-version works out what to
+      # write into the changelog from the commits since the most recent tag,
+      # and a shallow checkout has none: measured in clockwork2 on a clone
+      # missing v0.4.0, it compared from v0.3.2 and re-listed a release's
+      # worth of commits that had already shipped.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      # Trusted publishing needs npm 11.5.1 or later and node 22.14.0 or later.
+      # Node 22 ships npm 10, so the upgrade is explicit rather than whatever
+      # the runner image happens to carry this month.
+      - run: npm install -g npm@latest
+      - run: node --version && npm --version
+
+      - run: bun install --frozen-lockfile
+
+      # The same gate ci.yml's `check` job runs, for the one job whose mistakes
+      # cannot be undone: a version cannot be unpublished after 72 hours.
+      # `test:coverage` runs the same files as `test` and adds the floor, so
+      # the bare `test` is not repeated.
+      #
+      # The browser suite is not here. It needs a Chromium download, CI has
+      # already run it on this commit, and clockwork2 keeps the same line for
+      # the same reason - its release gate turns off the prerelease hook rather
+      # than drive browsers.
+      - run: bun run lint
+      - run: bun run build
+      - run: bun run typecheck
+      - run: bun run test:coverage
+      - name: the package would install cleanly
+        run: bun run check:publishable
+
+      # The bump, on a dispatch only. A tag names a version the tree already
+      # carries, so bumping there would release something nobody asked for.
+      #
+      # `--scripts.prerelease=""` turns off .versionrc.json's hook. That hook
+      # is the gate for a release cut on a laptop; here the steps above have
+      # already run it.
+      #
+      # `--skip.tag` because the last step of this job creates the tag, at the
+      # bump commit, together with the GitHub release.
+      - name: Bump the version
+        if: github.event_name == 'workflow_dispatch' && !inputs.dry_run
+        run: |
+          set -euo pipefail
+          before="$(node -p "require('./packages/game-base/package.json').version")"
+          # Nothing since the last tag means nothing to release. Cutting one
+          # anyway is what produced clockwork2's 0.6.0: a dispatch landed on a
+          # tree that had already been released a moment earlier, bumped it
+          # again, and published a version whose changelog section is blank. A
+          # release nobody can describe is a release nobody asked for.
+          #
+          # `git describe` names the most recent tag reachable from here, and
+          # an empty `rev-list` between it and HEAD is the case. A repository
+          # with no tag at all has everything to release, so it falls through -
+          # which is what the first release from CI needs.
+          if last="$(git describe --tags --abbrev=0 2>/dev/null)"; then
+            if [ -z "$(git rev-list "$last"..HEAD)" ]; then
+              echo "nothing has landed since $last; there is no release to cut" >&2
+              exit 1
+            fi
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          bunx commit-and-tag-version \
+            --release-as "${{ inputs.release_as }}" \
+            --skip.tag \
+            --scripts.prerelease=""
+          after="$(node -p "require('./packages/game-base/package.json').version")"
+          # A bump that changed nothing would publish nothing and say it
+          # succeeded, which is the failure this whole step exists to end.
+          if [ "$before" = "$after" ]; then
+            echo "the version is still $before; nothing would be published" >&2
+            exit 1
+          fi
+          # GITHUB_TOKEN-created refs start no further workflow run, so this
+          # cannot retrigger anything.
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+          echo "RELEASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          echo "bumped $before to $after"
+
+      # `dist` is what the tarball carries and the bump rewrote the manifests
+      # it was built from, so it is rebuilt at the version being published
+      # rather than at the one that was checked out.
+      - name: Rebuild at the bumped version
+        if: github.event_name == 'workflow_dispatch' && !inputs.dry_run
+        run: bun run build
+
+      # Two steps rather than one with a conditional argument: a ternary inside
+      # a shell string is where this kind of workflow goes wrong quietly.
+      #
+      # A dry run packs and asks the registry to validate the manifest. It does
+      # not exercise the OIDC exchange, because --dry-run never reaches the
+      # publish endpoint. The credential is proven only by a real publish, and
+      # the provenance attestation is the evidence.
+      - name: Publish (dry run)
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run
+        run: bun run scripts/publish.ts --dry-run
+      - name: Publish
+        if: github.event_name != 'workflow_dispatch' || !inputs.dry_run
+        run: bun run scripts/publish.ts
+
+      # `gh release create` creates the tag at --target when it does not exist
+      # yet, so this is the tag and the release in one call. A ref created with
+      # GITHUB_TOKEN does not start another workflow run, which is what stops
+      # this retriggering the push: tags trigger above.
+      #
+      # It runs even when the publish above found the version already on the
+      # registry, because that is exactly the re-run that exists to add a tag
+      # or a release that went missing. Both halves check first, so running it
+      # again changes nothing.
+      - name: Tag and publish the GitHub release
+        if: github.event_name != 'workflow_dispatch' || !inputs.dry_run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Read after the bump, so it is the version that was published.
+          version="$(node -p "require('./packages/game-base/package.json').version")"
+          tag="v$version"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "$tag is already released"
+            exit 0
+          fi
+          bun run scripts/release-notes.ts "$version" > "$RUNNER_TEMP/notes.md"
+          gh release create "$tag" \
+            --title "$tag" \
+            --notes-file "$RUNNER_TEMP/notes.md" \
+            --target "${RELEASE_SHA:-$GITHUB_SHA}"

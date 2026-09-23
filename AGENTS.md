@@ -160,15 +160,40 @@ under plain node.
 
 Patch and minor only. **No major releases for now**, here, in clockwork2 or in
 the arcade. On a 0.x version commit-and-tag-version maps a breaking change to a
-minor, so `bun run release` cannot reach 1.0.0 on its own, and there is no
-`release:major` script. `scripts/release-version.test.ts` holds the major at 0,
-so lifting the policy means deleting a test in a diff somebody reads.
+minor, so `bun run release` cannot reach 1.0.0 on its own, there is no
+`release:major` script, and the workflow's bump offers no major either.
+`scripts/release-version.test.ts` holds the major at 0, so lifting the policy
+means deleting a test in a diff somebody reads.
 
-Publishing is npm Trusted Publishing, as clockwork2 does it: no `NPM_TOKEN`,
-and npm signs a provenance attestation naming the commit and the workflow.
-A trusted publisher cannot be configured for a package that does not exist, so
-**the first version is published from a laptop** and the publisher configured
-afterwards.
+**A release is one dispatch of `release.yml`.** Pick `patch` or `minor`, leave
+the dry-run box unticked, and the job does the rest: it runs the gate CI runs,
+bumps the version, pushes the bump commit, rebuilds `dist` at the version being
+published, publishes, and creates the tag and the GitHub release at the commit
+it bumped. The release body is that version's own `CHANGELOG.md` section, so
+the notes are the changelog rather than a second description of the same
+commits.
+
+The filename is the configuration. npm's trusted publisher is set up against
+this repository and `release.yml` by name, so renaming the file revokes the
+credential: the next release fails at the OIDC exchange rather than at a test.
+There is no `NPM_TOKEN` here and nothing to rotate.
+
+Every guard in that job is a mistake clockwork2 made and paid for, and each is
+held by `scripts/release-version.test.ts` because a workflow cannot be unit
+tested:
+
+- **A dispatch bumps.** It used to publish whatever version the tree held, so
+  a dispatch after a merge found that version on the registry, skipped, and
+  reported success having released nothing.
+- **The checkout is `fetch-depth: 0`.** commit-and-tag-version reads the
+  commits since the most recent tag, and a shallow clone has none: it compared
+  from the wrong tag and re-listed a release's worth of commits that had
+  already shipped.
+- **It rebuilds after the bump**, because `dist` is what the tarball carries.
+- **It refuses a tree with nothing new since the last tag**, and
+  `scripts/release-notes.ts` throws on an empty changelog section. Between
+  them that is the version whose release body says nothing about itself.
+- **The tag names the bump commit**, not the one the job checked out.
 
 `.versionrc.json`'s `prerelease` hook runs the gate before the version is
 bumped, so it never sees the tree a release actually ships. Anything holding
@@ -176,8 +201,28 @@ the version literal therefore has to be in `bumpFiles`; clockwork2 lost several
 releases to exactly that, and `scripts/release-version.test.ts` is where the
 next such file gets caught.
 
-Raising the engine's peer range is a deliberate act, not maintenance. See the
-last section of `docs/sdk.md` for why it is bounded above.
+## Following the engine
+
+`.github/workflows/engine-update.yml` asks the registry once a day whether
+`@clockwork2/engine` has a newer release, and opens a pull request when it
+does. It asks the registry rather than listening to clockwork2: a dispatch
+from there would need a long-lived token with write access here, which is the
+thing trusted publishing exists to avoid, and it would only fire for a release
+cut that particular way.
+
+The bump itself is `scripts/bump-engine.ts`, which moves the version in all six
+places it is written - the root's pin, the peer range, the template's own
+dependency, the kernel version each example manifest declares, and the range
+`docs/sdk.md` quotes - and throws rather than skipping a file that does not
+hold what it expected. Raising the range is still a deliberate act: the pull
+request is where it is decided, not the merge.
+
+**That pull request has no checks of its own.** GitHub starts no workflow for a
+pull request opened with `GITHUB_TOKEN`, so the gate runs in the job that opens
+it and the result goes in the body with a link to the run. A failing gate still
+opens the pull request, because "the new engine breaks us" is the most useful
+form this notification takes. Pushing any commit to the branch gives it real
+checks.
 
 ## Commit gates
 

@@ -46,6 +46,10 @@ bun run test:e2e       # the browser suite: a real sandboxed frame, a real pad
 bun run check:publishable   # pack the package and read what a consumer gets
 ```
 
+A release is one dispatch of `release.yml`, which bumps, publishes and tags.
+`engine-update.yml` opens a pull request when clockwork2 publishes a new
+engine. Both are in [`AGENTS.md`](AGENTS.md).
+
 ## License
 
 MIT
