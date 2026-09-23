@@ -18,6 +18,10 @@ coverageDir = "coverage"
 # e2e is the Playwright suite and scripts is the repository's own tooling.
 coveragePathIgnorePatterns = [
   "packages/*/dist/**",
+  # A process entry point. Its last statement runs `main`, so importing it
+  # into the test runner would start a server and never return. What it
+  # decides is `parseArgs`, which is exported and tested.
+  "packages/game-base/src/cli/index.ts",
   "fixtures/**",
   "templates/**",
   "e2e/**",
