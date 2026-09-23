@@ -208,19 +208,28 @@ next such file gets caught.
 not redundant.
 
 clockwork2's release workflow dispatches an `engine-released` event as its
-last step, so a release arrives here in seconds. That needs a token with
-Contents: write on this repository, `ENGINE_RELEASED_TOKEN` in the
-organisation's secrets. It is the only long-lived credential either repository
-has, and it is a much smaller thing than the npm token trusted publishing
-removed: scoped to one permission on one repository, where the worst it can do
-is open a pull request.
+last step, so a release arrives here in seconds. That needs a token of its
+own, `ENGINE_RELEASED_TOKEN` in the organisation's secrets, and the job here
+opens its pull request with the same token. GitHub's table of fine-grained
+token permissions puts the dispatch under Contents: write and opening a pull
+request or requesting a review under Pull requests: write, so the token needs
+both, on this repository alone. With Contents alone the dispatch arrives and
+the pull request is refused. It is the only long-lived credential either
+repository has. Contents: write can also push to any unprotected branch here,
+which is more than the pull request needs and much less than the npm token
+trusted publishing removed. Make it from an account other than the reviewer
+the workflow names: the token's owner is the pull request's author, and GitHub
+refuses a review request from the author.
 
 The daily check is the backstop, and it is what makes the token's absence a
 delay rather than a failure. It catches a release published from somebody's
 laptop, a dispatch step that failed, a token that expired, and a version
 yanked and republished. Both triggers reach the same job, and the
 branch-per-version check is what stops two of them opening two pull requests
-for one release.
+for one release. A run that pushed its branch and then could not open the pull
+request leaves `engine/<version>` behind with none. The next run force-pushes
+over it, because a plain push would be refused by the earlier commit on every
+run until somebody deleted the branch by hand.
 
 The registry is the authority either way. A dispatch carries the version
 clockwork2 says it published and the job confirms it against npm before using

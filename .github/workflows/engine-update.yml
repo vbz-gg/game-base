@@ -6,11 +6,16 @@ name: Engine update
 #
 # clockwork2's release workflow sends a repository dispatch as its last step,
 # so an engine release reaches here in seconds rather than by the next morning.
-# That needs a token with Contents: write on this repository, which lives in
-# the organisation's secrets as ENGINE_RELEASED_TOKEN. It is the only
-# long-lived credential either repository has, and it is scoped to one
-# permission on one repository - unlike the npm token that trusted publishing
-# exists to avoid, which could publish anything.
+# That needs a token of its own, ENGINE_RELEASED_TOKEN in the organisation's
+# secrets, and this job opens its pull request with the same token. GitHub's
+# table of fine-grained token permissions puts a repository dispatch under
+# Contents: write, and opening a pull request or requesting a review under
+# Pull requests: write, so it needs both, on this repository alone. With
+# Contents alone the dispatch arrives and `gh pr create` is refused. It is the
+# only long-lived credential either repository has. Contents: write can also
+# push to any unprotected branch here, which is more than the pull request
+# needs, and much less than the npm token that trusted publishing exists to
+# avoid, which could publish anything.
 #
 # The daily check is the backstop, and it is what makes the token's absence a
 # delay rather than a failure. It catches a release published from somebody's
@@ -35,7 +40,9 @@ on:
 
 env:
   # Who gets the pull request. One line to change, and the only place a person
-  # is named in this repository's automation.
+  # is named in this repository's automation. The organisation's token should
+  # belong to somebody else: the token's owner is the pull request's author,
+  # and GitHub refuses a review request from the author.
   REVIEWER: hiddentao
   # A pull request opened with GITHUB_TOKEN starts no workflow, so it carries
   # no checks. Opened with the organisation's token it is an ordinary pull
@@ -166,7 +173,13 @@ jobs:
 
           Docs-Updated: sdk.md's peer range is rewritten by scripts/bump-engine.ts
           MESSAGE
-          git push origin "$BRANCH"
+          # This step runs only when no pull request of any state exists for
+          # the branch, and only this job is meant to create engine/<version>.
+          # A branch already there is an earlier run that pushed and then could
+          # not open its pull request. A plain push would be refused by that
+          # run's commit on every run from then on, so this one replaces it
+          # with a bump of today's main.
+          git push --force origin "$BRANCH"
 
           run="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           if [ "$GATE" = "success" ]; then
