@@ -1,6 +1,6 @@
 {
   "name": "@vbz-gg/game-base",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "Build a game the vbz arcade can run: on-screen controls, the two artifacts, and a harness that frames your game the way the arcade does",
   "license": "MIT",
