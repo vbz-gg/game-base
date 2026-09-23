@@ -8,7 +8,7 @@
     "build": "game-base build ."
   },
   "devDependencies": {
-    "@clockwork2/engine": "0.7.2",
+    "@clockwork2/engine": "0.7.3",
     "@vbz-gg/game-base": "^0.1.0",
     "typescript": "5.9.3"
   }
