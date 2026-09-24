@@ -11,7 +11,23 @@
 
 import { devices, expect, test } from "@playwright/test"
 import { Fingers } from "../src/fingers"
-import { endRun, framePoint, open, play, replay } from "../src/run"
+import {
+  checkpointCadence,
+  endRun,
+  framePoint,
+  open,
+  play,
+  replay,
+  waitForTick,
+} from "../src/run"
+
+/**
+ * Past two seconds of play at 60 Hz, so a recording holds two checkpoints
+ * before the one on its last tick and the interval between them shows. The
+ * paddle game runs that long whatever the fingers do; the template's runner
+ * can hit something first, so its interval is held by the template test.
+ */
+const PAST_TWO_SECONDS = 2 * 60 + 1
 
 test.use({ ...devices["Pixel 7"] })
 
@@ -64,6 +80,7 @@ test("a two-finger run replays to the score the browser showed", async ({
   await fingers.move(1, further.x, further.y)
   await fingers.up(1)
   await fingers.up(2)
+  await waitForTick(page, PAST_TWO_SECONDS)
 
   const run = await endRun(page)
   expect(run.recording.gameId).toBe("paddle")
@@ -73,6 +90,9 @@ test("a two-finger run replays to the score the browser showed", async ({
   expect(run.recording.inputs.some((input) => input.code === "boost")).toBe(
     true,
   )
+  const cadence = checkpointCadence(run.recording)
+  expect(cadence.seconds).toBeGreaterThanOrEqual(2)
+  expect(cadence.off).toEqual([])
 
   const replayed = await replay("paddle", run)
   expect(replayed.comparison.differences).toEqual([])

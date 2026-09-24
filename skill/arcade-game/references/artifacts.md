@@ -44,6 +44,14 @@ bundle holds one copy:
 import { PLAYFIELD, type View } from "cw2:sim"
 ```
 
+## The frame writes a checkpoint each second
+
+The template's frame passes `checkpointEvery: MANIFEST.session.tickHz` to
+`GameHost`. Keep it that way when you change `tickHz`. The arcade replays a
+run with one checkpoint per second of play, so a frame that wrote them every
+60 ticks would agree at 60 Hz and disagree on every run at 30 or 120 Hz, and
+each of those runs would count against your game.
+
 ## What is checked, on the bytes
 
 1. One ES module, decodable as strict UTF-8.
