@@ -76,6 +76,22 @@ describe("what this repository ships as an example", () => {
   }
 
   /**
+   * A platform replays with one checkpoint per second of play. A frame that
+   * wrote them at a fixed count of ticks agrees at the one tick rate that
+   * count was written for and disagrees on every run at any other, so an
+   * author who changes `tickHz` from the template's 60 would see every run
+   * rejected. A browser run at 60 Hz cannot tell the two apart, which is why
+   * this reads the frame an author starts from.
+   */
+  for (const subject of SUBJECTS) {
+    test(`${subject.name} writes a checkpoint each second at any tick rate`, async () => {
+      const frame = await Bun.file(join(subject.dir, "src", "frame.ts")).text()
+      const cadence = /checkpointEvery:\s*([^,\n]+)/.exec(frame)
+      expect(cadence?.[1]?.trim()).toBe("MANIFEST.session.tickHz")
+    })
+  }
+
+  /**
    * The two exist to show different answers to the same question, and a
    * change that made them agree would leave one path with no example at all.
    */

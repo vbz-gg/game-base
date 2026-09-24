@@ -39,7 +39,10 @@ connectToParent<View>({
       config: (init.config as Config | null) ?? DEFAULT_CONFIG,
       presentation: createPaddlePresentation(),
       container,
-      checkpointEvery: 60,
+      // One a second of play, which is where a platform's replay looks for
+      // them. A fixed number is right only at the tick rate it was written
+      // for: at 30 or 120 Hz every replay would miss or add checkpoints.
+      checkpointEvery: MANIFEST.session.tickHz,
       maxTicks: init.maxTicks,
       ...(init.inputs === undefined
         ? {}

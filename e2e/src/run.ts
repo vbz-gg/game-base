@@ -46,6 +46,31 @@ export interface RecordedRun {
     readonly code: string
     readonly value: number
   }[]
+  readonly checkpoints: readonly {
+    readonly tick: number
+    readonly hash: string
+  }[]
+}
+
+/**
+ * How a recording's checkpoints fall against whole seconds of play.
+ *
+ * A platform replays with one checkpoint per second, plus one on the tick the
+ * run ended, so a frame that wrote them at any other interval disagrees with
+ * every replay of every run. `seconds` counts the ones before the end, so a
+ * test can refuse a run too short to show the interval at all.
+ */
+export function checkpointCadence(recording: RecordedRun): {
+  readonly seconds: number
+  readonly off: readonly number[]
+} {
+  const before = recording.checkpoints
+    .map((checkpoint) => checkpoint.tick)
+    .filter((tick) => tick !== recording.endTick)
+  return {
+    seconds: before.length,
+    off: before.filter((tick) => tick % recording.tickHz !== 0),
+  }
 }
 
 let known: Record<SubjectName, SubjectInfo> | null = null
@@ -67,6 +92,15 @@ export async function open(page: Page, name: SubjectName): Promise<void> {
   // cross-origin to an opaque origin, so without
   // `access-control-allow-origin: *` nothing loads and nothing says so.
   await expect(page.locator("#status")).toHaveText("ready")
+}
+
+/** Waits until the simulation has run at least `tick` ticks. */
+export async function waitForTick(page: Page, tick: number): Promise<void> {
+  await page.waitForFunction((at) => {
+    const status = document.querySelector("#status")?.textContent ?? ""
+    const match = /^tick (\d+)/.exec(status)
+    return match !== null && Number(match[1]) >= at
+  }, tick)
 }
 
 /** Starts the run and waits until the simulation has actually ticked. */
