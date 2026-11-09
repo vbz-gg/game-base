@@ -159,7 +159,7 @@ under plain node.
 ## Releasing
 
 Patch and minor only. **No major releases for now**, here, in clockwork2 or in
-the arcade. On a 0.x version commit-and-tag-version maps a breaking change to a
+the platform. On a 0.x version commit-and-tag-version maps a breaking change to a
 minor, so `bun run release` cannot reach 1.0.0 on its own, there is no
 `release:major` script, and the workflow's bump offers no major either.
 `scripts/release-version.test.ts` holds the major at 0, so lifting the policy
@@ -195,12 +195,12 @@ tested:
   them that is the version whose release body says nothing about itself.
 - **The tag names the bump commit**, not the one the job checked out.
 
-**The last step tells the arcade.** It sends a `game-base-released` dispatch
-carrying the version, so the arcade's update job opens its pull request in
-seconds. It reads `ENGINE_RELEASED_TOKEN`, the secret clockwork2's release
-uses to tell this repository, and it is best-effort: a missing token prints a
-line and exits 0, because the version is already out and the arcade's daily
-check will find it.
+**The last step tells the platform.** It sends a `game-base-released`
+dispatch carrying the version to vbz-gg/platform, so the platform's update job
+opens its pull request in seconds. It reads `ENGINE_RELEASED_TOKEN`, the
+secret clockwork2's release uses to tell this repository, and it is
+best-effort: a missing token prints a line and exits 0, because the version is
+already out and the platform's daily check will find it.
 
 `.versionrc.json`'s `prerelease` hook runs the gate before the version is
 bumped, so it never sees the tree a release actually ships. Anything holding
