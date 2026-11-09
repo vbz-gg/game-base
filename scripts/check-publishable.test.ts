@@ -13,7 +13,7 @@ import {
 
 function shipped(over: Partial<Shipped> = {}): Shipped {
   return {
-    name: "@vbz-gg/game-base",
+    name: "@vbz-gg/sdk",
     version: "0.1.0",
     dependencies: {},
     files: [
@@ -56,7 +56,7 @@ describe("what a tarball would do to a consumer", () => {
   /**
    * The harness bundles its page script at start, from a path it builds off
    * `import.meta.dir`. Nothing that imports the package would notice its
-   * absence: the failure arrives when somebody runs `game-base dev`.
+   * absence: the failure arrives when somebody runs `vbz dev`.
    */
   test("a runtime file the package reads but never imports is caught", () => {
     const problems = problemsWith(
@@ -80,7 +80,7 @@ describe("what a tarball would do to a consumer", () => {
   })
 
   test("the checker names the package that is published", () => {
-    expect(PUBLIC_PACKAGES).toEqual(["game-base"])
+    expect(PUBLIC_PACKAGES).toEqual(["sdk"])
   })
 })
 
@@ -109,7 +109,7 @@ describe("what plain node makes of the exports map", () => {
    * fails on a consumer's first import.
    */
   test("an extensionless relative import is caught", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "game-base-importable-"))
+    const dir = await mkdtemp(join(tmpdir(), "sdk-importable-"))
     try {
       await mkdir(join(dir, "dist"), { recursive: true })
       await writeFile(join(dir, "dist", "helper.js"), "export const a = 1\n")
@@ -148,7 +148,7 @@ describe("what plain node makes of the exports map", () => {
    * has to read differently from a relative path node cannot resolve.
    */
   test("a missing peer is reported as unchecked, not as broken", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "game-base-importable-peer-"))
+    const dir = await mkdtemp(join(tmpdir(), "sdk-importable-peer-"))
     try {
       await mkdir(join(dir, "dist"), { recursive: true })
       await writeFile(

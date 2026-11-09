@@ -14,7 +14,7 @@ import {
   TRAILER,
 } from "./check-docs-updated"
 
-const BEARING = ["packages/game-base/src/controls/render.ts"]
+const BEARING = ["packages/sdk/src/controls/render.ts"]
 const REAL = `${TRAILER}: re-read sdk.md on the pad; the release rule is unchanged`
 
 function commit(subject: string, ...rest: string[]): string {
@@ -28,13 +28,13 @@ describe("bearing paths", () => {
 
   test("every documented surface is covered", () => {
     const covered = [
-      "packages/game-base/src/controls/schemes.ts",
-      "packages/game-base/README.md",
+      "packages/sdk/src/controls/schemes.ts",
+      "packages/sdk/README.md",
       "e2e/specs/two-fingers.spec.ts",
       "scripts/check-coverage.ts",
-      "skill/arcade-game/SKILL.md",
+      "skill/vbz-game/SKILL.md",
       "docs/sdk.md",
-      "packages/game-base/templates/game/src/sim/manifest.ts",
+      "packages/sdk/templates/game/src/sim/manifest.ts",
       "fixtures/paddle/src/sim/index.ts",
       "README.md",
       "package.json",
@@ -102,11 +102,7 @@ describe("exemptions", () => {
   test("a release commit staging every bumped manifest passes", () => {
     // commit-and-tag-version writes this commit with no editor, so a trailer
     // cannot be added to it and --no-verify is banned.
-    const staged = [
-      "package.json",
-      "packages/game-base/package.json",
-      "CHANGELOG.md",
-    ]
+    const staged = ["package.json", "packages/sdk/package.json", "CHANGELOG.md"]
     expect(checkCommitMessage("chore(release): 0.2.0", staged).ok).toBe(true)
   })
 })

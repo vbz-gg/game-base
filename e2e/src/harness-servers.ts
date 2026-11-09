@@ -3,18 +3,18 @@
  *
  * One process, because Playwright starts a `webServer` by waiting on a URL
  * and four servers behind one health check is one wait rather than four. It
- * builds each game through the real CLI first, exactly as `game-base dev`
+ * builds each game through the real CLI first, exactly as `vbz dev`
  * does, so the manifest the harness reads is this build's and not a stale one
  * left in a working tree.
  *
- * It imports game-base by relative path rather than by package name. The unit
+ * It imports the SDK by relative path rather than by package name. The unit
  * tests do the same, and what a consumer gets from the package's exports map
  * is `bun run check:publishable`'s question, not this suite's.
  */
 
 import { join } from "node:path"
-import { main } from "../../packages/game-base/src/cli/index"
-import { blobKeys, startHarness } from "../../packages/game-base/src/harness"
+import { main } from "../../packages/sdk/src/cli/index"
+import { blobKeys, startHarness } from "../../packages/sdk/src/harness"
 import { CONTROL_PORT, SUBJECTS, type SubjectName } from "./env"
 
 const ROOT = join(import.meta.dir, "..", "..")

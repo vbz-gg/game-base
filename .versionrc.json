@@ -1,6 +1,6 @@
 {
   "packageFiles": ["package.json"],
-  "bumpFiles": ["package.json", "packages/game-base/package.json"],
+  "bumpFiles": ["package.json", "packages/sdk/package.json"],
   "infile": "CHANGELOG.md",
   "tagPrefix": "v",
   "scripts": {

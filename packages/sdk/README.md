@@ -1,4 +1,4 @@
-# @vbz-gg/game-base
+# @vbz-gg/sdk
 
 The SDK for building a game the [vbz](https://vbz.gg) arcade can run.
 
@@ -8,8 +8,11 @@ replays to check the score. This package is what sits between that and the
 arcade - the on-screen controls, the two artifacts an upload carries, and a
 harness that frames your game locally the way the arcade frames it.
 
+Versions up to 0.2.0 were published as `@vbz-gg/game-base`, with the command
+`game-base`. The command is now `vbz`.
+
 ```bash
-bunx @vbz-gg/game-base new ./my-game
+bunx @vbz-gg/sdk new ./my-game
 cd ./my-game && bun install
 bun run dev
 ```
@@ -24,9 +27,9 @@ the engine rather than two.
 ## The three commands
 
 ```bash
-game-base new   <dir>   copy a game that already conforms, and rename it
-game-base build <dir>   write dist/sim.js, dist/frame.js and dist/manifest.json
-game-base dev   <dir>   serve the game on two origins, the way the arcade does
+vbz new   <dir>   copy a game that already conforms, and rename it
+vbz build <dir>   write dist/sim.js, dist/frame.js and dist/manifest.json
+vbz dev   <dir>   serve the game on two origins, the way the arcade does
 ```
 
 `dev` is the arcade's play view on your laptop: the game in a sandboxed frame
@@ -79,7 +82,7 @@ phone player so rather than framing a canvas they cannot steer.
 If you are building a host rather than a game:
 
 ```ts
-import { mountControls } from "@vbz-gg/game-base/controls"
+import { mountControls } from "@vbz-gg/sdk/controls"
 
 const pad = mountControls(playView, {
   scheme: "dpad+1",

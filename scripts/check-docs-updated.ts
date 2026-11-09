@@ -2,7 +2,7 @@
  * Rejects a commit that changes what the documentation describes unless its
  * message carries a `Docs-Updated:` trailer.
  *
- * `docs/sdk.md`, the two READMEs and `skill/arcade-game/` are read by people
+ * `docs/sdk.md`, the two READMEs and `skill/vbz-game/` are read by people
  * and by agents that follow them literally, so a stale sentence is worse than
  * a missing one. This repository sits between two others, and most of what it
  * documents is a contract rather than a behaviour: which slots a scheme has,
@@ -144,7 +144,7 @@ export function isBareValue(value: string): boolean {
   return value.length < MIN_VALUE_LENGTH || BARE_VALUES.has(value.toLowerCase())
 }
 
-/** `packages/game-base/src/controls/render.ts and 3 more`, for a rejection. */
+/** `packages/sdk/src/controls/render.ts and 3 more`, for a rejection. */
 export function summarize(bearing: readonly string[]): string {
   const rest = bearing.length - 1
   return `${bearing[0]}${rest > 0 ? ` and ${rest} more` : ""}`
@@ -199,7 +199,7 @@ function main(): void {
 
   console.error(`\ncommit rejected: ${result.error}\n`)
   console.error(
-    "docs/sdk.md, the two READMEs and skill/arcade-game/ describe this SDK.",
+    "docs/sdk.md, the two READMEs and skill/vbz-game/ describe this SDK.",
   )
   console.error(
     "The trailer records that you re-read the ones covering what you changed and",

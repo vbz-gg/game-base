@@ -45,7 +45,7 @@ async function writeGame(dir: string, frame: string): Promise<void> {
 }
 
 beforeAll(async () => {
-  root = await mkdtemp(join(tmpdir(), "game-base-e2e-"))
+  root = await mkdtemp(join(tmpdir(), "sdk-e2e-"))
   await writeGame(
     root,
     `import { MANIFEST, TINT } from "cw2:sim"\n` +
@@ -94,7 +94,7 @@ describe("building a game", () => {
   })
 
   test("a frame that inlines its simulation is refused at build time", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "game-base-inline-"))
+    const dir = await mkdtemp(join(tmpdir(), "sdk-inline-"))
     try {
       // Reaching the simulation by a relative path rather than by the one
       // bare specifier is how a frame ends up carrying its own copy.

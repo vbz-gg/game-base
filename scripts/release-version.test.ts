@@ -56,11 +56,31 @@ describe("the release version", () => {
       versionrc.bumpFiles.map((f) => (typeof f === "string" ? f : f.filename)),
     )
     expect(bumped.has("package.json")).toBe(true)
-    expect(bumped.has("packages/game-base/package.json")).toBe(true)
+    expect(bumped.has("packages/sdk/package.json")).toBe(true)
+  })
+
+  /**
+   * npm's trusted publishing refuses a package whose `repository.url` does
+   * not exactly match the repository the workflow runs in. The repository
+   * was renamed from vbz-gg/game-base, so a field left behind would fail the
+   * first release at the publish step, after the version was bumped.
+   */
+  test("the published package names the repository it is released from", () => {
+    const pkg = JSON.parse(
+      readFileSync(join(ROOT, "packages/sdk/package.json"), "utf8"),
+    ) as { repository: { url: string; directory: string } }
+    const root = JSON.parse(
+      readFileSync(join(ROOT, "package.json"), "utf8"),
+    ) as {
+      repository: { url: string }
+    }
+    expect(pkg.repository.url).toBe("git+https://github.com/vbz-gg/sdk.git")
+    expect(root.repository.url).toBe(pkg.repository.url)
+    expect(pkg.repository.directory).toBe("packages/sdk")
   })
 
   test("and holds the same version today", () => {
-    expect(manifest("packages/game-base/package.json").version).toBe(
+    expect(manifest("packages/sdk/package.json").version).toBe(
       manifest("package.json").version,
     )
   })
@@ -129,7 +149,7 @@ describe("the release workflow", () => {
     const start = workflow.indexOf("- name: Tell the platform")
     expect(start).toBeGreaterThan(-1)
     const step = workflow.slice(start)
-    expect(step).toContain("event_type=game-base-released")
+    expect(step).toContain("event_type=sdk-released")
     // The platform runs the backend now. The arcade is set aside, and a
     // dispatch to it would open a pull request nobody merges.
     expect(step).toContain("gh api repos/vbz-gg/platform/dispatches")
@@ -138,7 +158,7 @@ describe("the release workflow", () => {
     expect(step).toContain("secrets.ENGINE_RELEASED_TOKEN")
     expect(step).toContain("continue-on-error: true")
     // It reads the version after the bump, so it names what was published.
-    expect(step).toContain("packages/game-base/package.json")
+    expect(step).toContain("packages/sdk/package.json")
     // And it says so when the token is not there, rather than failing.
     expect(step).toContain("the platform's daily check will pick this up")
   })

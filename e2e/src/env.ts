@@ -19,7 +19,7 @@ export const CONTROL_PORT = 4319
  */
 export const SUBJECTS = {
   template: {
-    dir: ["packages", "game-base", "templates", "game"],
+    dir: ["packages", "sdk", "templates", "game"],
     hostPort: 4320,
     framePort: 4321,
   },

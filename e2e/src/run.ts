@@ -196,7 +196,7 @@ export async function replay(name: SubjectName, run: Run): Promise<Replayed> {
   const recording = decodeRecording(run.encoded)
   const source = await (await fetch(`${info.frameOrigin}${info.sim}`)).text()
 
-  const dir = await mkdtemp(join(tmpdir(), "game-base-replay-"))
+  const dir = await mkdtemp(join(tmpdir(), "sdk-replay-"))
   try {
     const file = join(dir, "sim.mjs")
     await writeFile(file, source)

@@ -1,4 +1,4 @@
-# game-base
+# vbz.gg SDK
 
 The SDK for building games the [vbz](https://vbz.gg) arcade can run.
 
@@ -8,7 +8,7 @@ browser records what the player pressed, the server replays that log, and the
 server's answer is the one that counts. This repository is what sits between
 that engine and the arcade.
 
-It publishes one package, `@vbz-gg/game-base`, which carries:
+It publishes one package, `@vbz-gg/sdk`, which carries:
 
 - **the on-screen control schemes**, and the renderer that draws them, so the
   pad you test against is the pad a player gets
@@ -16,20 +16,24 @@ It publishes one package, `@vbz-gg/game-base`, which carries:
 - **a harness**, which frames your game locally the way the arcade does: two
   origins, the sandbox, the CSP and the full-viewport play view
 
+Versions up to 0.2.0 were published as `@vbz-gg/game-base`, from a
+repository of that name, and the command was `game-base`. Later versions are
+`@vbz-gg/sdk`, and the command is `vbz`.
+
 What a game author does with it is in
-[`packages/game-base/README.md`](packages/game-base/README.md), and
+[`packages/sdk/README.md`](packages/sdk/README.md), and
 [`docs/sdk.md`](docs/sdk.md) explains how the whole thing works.
 
 ## Layout
 
 ```
-packages/game-base/             the published package
-packages/game-base/templates/   a game to copy and start from, shipped with it
-skill/arcade-game/              the agent skill for building one
-docs/sdk.md                     how it works, from first principles
-fixtures/paddle/                a small game that draws its own controls
-e2e/                            the browser suite, driving the harness for real
-scripts/                        this repository's own tooling
+packages/sdk/            the published package
+packages/sdk/templates/  a game to copy and start from, shipped with it
+skill/vbz-game/          the agent skill for building one
+docs/sdk.md              how it works, from first principles
+fixtures/paddle/         a small game that draws its own controls
+e2e/                     the browser suite, driving the harness for real
+scripts/                 this repository's own tooling
 ```
 
 ## Commands

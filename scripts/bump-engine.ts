@@ -59,7 +59,7 @@ export async function currentEngine(root = ROOT): Promise<EngineVersions> {
     await readFile(join(root, "package.json"), "utf8"),
   ) as { devDependencies?: Record<string, string> }
   const packageManifest = JSON.parse(
-    await readFile(join(root, "packages/game-base/package.json"), "utf8"),
+    await readFile(join(root, "packages/sdk/package.json"), "utf8"),
   ) as { peerDependencies?: Record<string, string> }
 
   const pinned = rootManifest.devDependencies?.[ENGINE]
@@ -80,17 +80,17 @@ function edits(from: EngineVersions, to: string): Edit[] {
   return [
     { file: "package.json", path: ["devDependencies", ENGINE] },
     {
-      file: "packages/game-base/templates/game/package.json",
+      file: "packages/sdk/templates/game/package.json",
       path: ["devDependencies", ENGINE],
     },
     {
-      file: "packages/game-base/package.json",
+      file: "packages/sdk/package.json",
       path: ["peerDependencies", ENGINE],
     },
     // What each example declares it was built against. The platform reads the
     // major without running the game, so it is data rather than a comment.
     ...[
-      "packages/game-base/templates/game/src/sim/manifest.ts",
+      "packages/sdk/templates/game/src/sim/manifest.ts",
       "fixtures/paddle/src/sim/manifest.ts",
     ].map((file) => ({
       file,

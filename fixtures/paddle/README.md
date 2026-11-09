@@ -25,5 +25,5 @@ unbound key is.
 It is also playable with the arrow keys, so it works on a desktop.
 
 ```bash
-bun run packages/game-base/src/cli/index.ts dev fixtures/paddle
+bun run packages/sdk/src/cli/index.ts dev fixtures/paddle
 ```

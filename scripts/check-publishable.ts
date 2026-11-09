@@ -27,7 +27,7 @@ import { join, resolve } from "node:path"
 import { pathToFileURL } from "node:url"
 import { $ } from "bun"
 
-export const PUBLIC_PACKAGES = ["game-base"] as const
+export const PUBLIC_PACKAGES = ["sdk"] as const
 
 export type Shipped = {
   readonly name: string
@@ -128,7 +128,7 @@ export async function unimportableSubpaths(
  * Two kinds. The harness bundles its own page script when it starts, from a
  * path built off `import.meta.dir`: in this repository that resolves to the
  * TypeScript beside the source and in an installed copy it has to resolve to
- * the compiled file, which only ships if `tsc` emitted it. And `game-base
+ * the compiled file, which only ships if `tsc` emitted it. And `vbz
  * new` copies the template out of the package, which only works if the
  * template is in the tarball.
  *
@@ -195,13 +195,13 @@ export function problemsWith(shipped: Shipped): string[] {
 }
 
 async function main(): Promise<number> {
-  if (!existsSync("packages/game-base/package.json")) {
+  if (!existsSync("packages/sdk/package.json")) {
     console.error("run this from the repository root")
     return 2
   }
   const found: string[] = []
   for (const pkg of PUBLIC_PACKAGES) {
-    const into = mkdtempSync(join(tmpdir(), `game-base-pack-${pkg}-`))
+    const into = mkdtempSync(join(tmpdir(), `sdk-pack-${pkg}-`))
     try {
       const shipped = await pack(pkg, into)
       const problems = problemsWith(shipped)

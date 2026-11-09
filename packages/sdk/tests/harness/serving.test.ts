@@ -77,7 +77,7 @@ describe("the harness, started whole", () => {
   let harness: Harness
 
   beforeAll(async () => {
-    root = await mkdtemp(join(tmpdir(), "game-base-harness-"))
+    root = await mkdtemp(join(tmpdir(), "sdk-harness-"))
     await mkdir(join(root, "src", "sim"), { recursive: true })
     await writeFile(
       join(root, "src", "sim", "index.ts"),
@@ -91,7 +91,7 @@ describe("the harness, started whole", () => {
       join(root, "src", "frame.ts"),
       `import { MANIFEST } from "cw2:sim"\ndocument.title = MANIFEST.name\n`,
     )
-    // The manifest is read from dist, which is what `game-base build` writes.
+    // The manifest is read from dist, which is what `vbz build` writes.
     await mkdir(join(root, "dist"), { recursive: true })
     await writeFile(
       join(root, "dist", "manifest.json"),
@@ -161,7 +161,7 @@ describe("the harness, started whole", () => {
   })
 
   test("a game with no manifest on disk still starts, on defaults", async () => {
-    const bare = await mkdtemp(join(tmpdir(), "game-base-bare-"))
+    const bare = await mkdtemp(join(tmpdir(), "sdk-bare-"))
     try {
       await mkdir(join(bare, "src", "sim"), { recursive: true })
       await writeFile(
@@ -202,7 +202,7 @@ describe("the page script the harness bundles at start", () => {
    * TypeScript here and has to resolve to the compiled file in an installed
    * copy - `tsc` compiles TypeScript and does not copy it. Hard-coding `.ts`
    * builds nothing anywhere but this repository, and the failure arrives when
-   * somebody runs `game-base dev` rather than when anything is imported.
+   * somebody runs `vbz dev` rather than when anything is imported.
    */
   test("its entry is a file that exists, whichever tree this is", () => {
     const entry = harnessPageEntry()
@@ -211,7 +211,7 @@ describe("the page script the harness bundles at start", () => {
   })
 
   test("a compiled tree resolves to the compiled file", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "game-base-page-"))
+    const dir = await mkdtemp(join(tmpdir(), "sdk-page-"))
     try {
       await writeFile(join(dir, "main.js"), "export const a = 1\n")
       expect(harnessPageEntry(dir).endsWith("main.js")).toBe(true)

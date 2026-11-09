@@ -1,5 +1,5 @@
 ---
-name: arcade-game
+name: vbz-game
 description: Build a game the vbz arcade can run, on top of a Clockwork 2 simulation - the two artifacts an upload carries, the manifest the platform reads without running anything, on-screen controls for a phone, and the sandboxed cross-origin frame a game plays inside. Use when starting a game for the arcade, choosing or binding controls, writing the frame entry, testing against the harness, or working out why ingest refused an upload. For the simulation's own rules - fixed ticks, seeded randomness, dmath, snapshots - use the platform-game skill instead.
 ---
 
@@ -16,7 +16,7 @@ it.
 ## Start here
 
 ```bash
-bunx @vbz-gg/game-base new ./my-game
+bunx @vbz-gg/sdk new ./my-game
 cd ./my-game && bun install
 bun run dev                       # your game, framed the way the arcade frames it
 ```
@@ -167,12 +167,12 @@ about determinism:
 - `references/controls.md` - every scheme, its slots, and the custom path.
 - `references/artifacts.md` - the two entries, `cw2:sim`, the rewrite, the
   content addressing and the size caps.
-- `references/harness.md` - what `game-base dev` serves and what it does not
+- `references/harness.md` - what `vbz dev` serves and what it does not
   reproduce.
 - `references/ingest.md` - what the platform checks, in the order it checks it.
 
 ## Commands
 
-- `game-base new <dir>` - a game that already conforms.
-- `game-base build <dir>` - the three files a submission carries.
-- `game-base dev <dir>` - the arcade's play view, locally, on two origins.
+- `vbz new <dir>` - a game that already conforms.
+- `vbz build <dir>` - the three files a submission carries.
+- `vbz dev <dir>` - the arcade's play view, locally, on two origins.

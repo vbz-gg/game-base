@@ -1,5 +1,5 @@
 {
-  "name": "@vbz-gg/game-base-e2e",
+  "name": "@vbz-gg/sdk-e2e",
   "version": "0.0.0",
   "private": true,
   "type": "module",

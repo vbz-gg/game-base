@@ -3,7 +3,7 @@
 Guidance for coding agents. **Read `docs/sdk.md` first**: it explains how this
 package works from first principles, and everything below assumes it. The rest
 of the reading, in order of how far away it is: `README.md` says what the
-repository is, `packages/game-base/README.md` is what a game author reads, and
+repository is, `packages/sdk/README.md` is what a game author reads, and
 clockwork2's `docs/engine.md` is required before changing anything that touches
 a manifest or an input.
 
@@ -71,7 +71,7 @@ custom path exists to close.
 
 ## Publishing what a consumer can actually use
 
-**Every relative import inside `packages/game-base/src` carries `.js`**, and a
+**Every relative import inside `packages/sdk/src` carries `.js`**, and a
 directory import carries the whole `/index.js`. `tsc` emits a relative
 specifier exactly as the source wrote it, and node ESM has no extension
 resolution, so `from "./schemes"` runs everywhere in this repository and
@@ -86,7 +86,7 @@ package would notice that file missing.
 
 ## The skill
 
-`skill/arcade-game/` is prose an agent follows literally, so a stale sentence
+`skill/vbz-game/` is prose an agent follows literally, so a stale sentence
 is worse than a missing one. It has one subject: everything between a
 conforming simulation and a game the arcade can run. Determinism belongs to
 clockwork2's `platform-game`, and this one points at it rather than repeating
@@ -195,12 +195,12 @@ tested:
   them that is the version whose release body says nothing about itself.
 - **The tag names the bump commit**, not the one the job checked out.
 
-**The last step tells the platform.** It sends a `game-base-released`
-dispatch carrying the version to vbz-gg/platform, so the platform's update job
-opens its pull request in seconds. It reads `ENGINE_RELEASED_TOKEN`, the
-secret clockwork2's release uses to tell this repository, and it is
-best-effort: a missing token prints a line and exits 0, because the version is
-already out and the platform's daily check will find it.
+**The last step tells the platform.** It sends an `sdk-released` dispatch
+carrying the version to vbz-gg/platform, so the platform's update job opens
+its pull request in seconds. It reads `ENGINE_RELEASED_TOKEN`, the secret
+clockwork2's release uses to tell this repository, and it is best-effort: a
+missing token prints a line and exits 0, because the version is already out
+and the platform's daily check will find it.
 
 `.versionrc.json`'s `prerelease` hook runs the gate before the version is
 bumped, so it never sees the tree a release actually ships. Anything holding

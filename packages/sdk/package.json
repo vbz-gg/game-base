@@ -1,5 +1,5 @@
 {
-  "name": "@vbz-gg/game-base",
+  "name": "@vbz-gg/sdk",
   "version": "0.2.0",
   "type": "module",
   "description": "Build a game the vbz arcade can run: on-screen controls, the two artifacts, and a harness that frames your game the way the arcade does",
@@ -7,8 +7,8 @@
   "author": "Ramesh Nair",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vbz-gg/game-base.git",
-    "directory": "packages/game-base"
+    "url": "git+https://github.com/vbz-gg/sdk.git",
+    "directory": "packages/sdk"
   },
   "sideEffects": false,
   "files": [
@@ -43,6 +43,6 @@
     "@clockwork2/engine": ">=0.8.0 <0.9.0"
   },
   "bin": {
-    "game-base": "./dist/cli/index.js"
+    "vbz": "./dist/cli/index.js"
   }
 }
