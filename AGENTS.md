@@ -283,9 +283,11 @@ Merge, revert, fixup, squash and `chore(release)` commits are exempt: git and
 commit-and-tag-version write those messages themselves, some with no editor at
 all.
 
-A value under ten characters is rejected, as is a stamp from the list in
-`scripts/check-docs-updated.ts`. Say what you did, inside the 100 columns
-commitlint allows a trailer line:
+The trailer is a line below the subject that opens a paragraph or follows
+only other trailers in its paragraph. Prose that wraps onto a line starting
+`Docs-Updated:` is not the record. A value under ten characters is rejected,
+as is a stamp from the list in `scripts/check-docs-updated.ts`. Say what you
+did, inside the 100 columns commitlint allows a trailer line:
 
     Docs-Updated: added the dpad+2 slots to sdk.md and to the skill's controls page
     Docs-Updated: re-read sdk.md on the two artifacts; the rewrite is unchanged
