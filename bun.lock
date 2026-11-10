@@ -6,7 +6,7 @@
       "name": "game-base",
       "devDependencies": {
         "@biomejs/biome": "2.5.14",
-        "@clockwork2/engine": "0.7.3",
+        "@clockwork2/engine": "0.8.0",
         "@commitlint/cli": "^19.8.1",
         "@commitlint/config-conventional": "^19.8.1",
         "@happy-dom/global-registrator": "^20.14.5",
@@ -26,12 +26,12 @@
     },
     "packages/game-base": {
       "name": "@vbz-gg/game-base",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "bin": {
         "game-base": "./dist/cli/index.js",
       },
       "peerDependencies": {
-        "@clockwork2/engine": ">=0.7.3 <0.8.0",
+        "@clockwork2/engine": ">=0.8.0 <0.9.0",
       },
     },
   },
@@ -58,7 +58,7 @@
 
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.5.14", "", { "os": "win32", "cpu": "x64" }, "sha512-oJWmBhoHsnhUKIke+0gXDX0mltJrWHA1UyHsrTlXwX0TL64ilVZAo+TYZm97baecV0esBdpzy3k96q+09JaZUQ=="],
 
-    "@clockwork2/engine": ["@clockwork2/engine@0.7.3", "", { "peerDependencies": { "pixi.js": "^8.0.0", "three": ">=0.170.0", "typescript": ">=5.5.0" }, "optionalPeers": ["pixi.js", "three", "typescript"], "bin": { "clockwork2-validate": "dist/validate/cli.js" } }, "sha512-srkLJZMbR0XNnijP8SzPhDOKhvCYPMR6CtPg/jMAcaIS7KFZsxuCPRuoP146GoPxUioQOmkzUHILvypGlQghLg=="],
+    "@clockwork2/engine": ["@clockwork2/engine@0.8.0", "", { "peerDependencies": { "pixi.js": "^8.0.0", "three": ">=0.170.0", "typescript": ">=5.5.0" }, "optionalPeers": ["pixi.js", "three", "typescript"], "bin": { "clockwork2-validate": "dist/validate/cli.js" } }, "sha512-Z0Y7eDxn7/lEiXveWBc62sMvPuPdKF8qXM7FANRkOmMUtc4a9bV0GpI/slp8O1I3i5vzFbs+7Ebsp/sTIz6v0w=="],
 
     "@commitlint/cli": ["@commitlint/cli@19.8.1", "", { "dependencies": { "@commitlint/format": "^19.8.1", "@commitlint/lint": "^19.8.1", "@commitlint/load": "^19.8.1", "@commitlint/read": "^19.8.1", "@commitlint/types": "^19.8.1", "tinyexec": "^1.0.0", "yargs": "^17.0.0" }, "bin": { "commitlint": "./cli.js" } }, "sha512-LXUdNIkspyxrlV6VDHWBmCZRtkEVRpBKxi2Gtw3J54cGWhLCTouVD/Q6ZSaSvd2YaDObWK8mDjrz3TIKtaQMAA=="],
 
