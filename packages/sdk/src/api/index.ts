@@ -356,7 +356,8 @@ export type RunState = "open" | "submitted" | "settled" | "faulted" | "expired"
  * Why a replay did not count. `mismatch`: the replay reached a different
  * state from the recording. `log_fault`: the inputs could not be replayed,
  * for example they ran past the replay's time budget. `platform_fault`: the
- * platform failed before the replay ran, and it will try again.
+ * platform failed before the replay ran, tried five times, and stopped, so
+ * the run is final. While it is still trying, the run waits at `submitted`.
  */
 export type RunFault = "mismatch" | "log_fault" | "platform_fault"
 
@@ -367,7 +368,8 @@ export type RunFault = "mismatch" | "log_fault" | "platform_fault"
  *
  * `submitted` waits for a replay. `expired` is a run closed without a submit:
  * one that sent chunks is then replayed from them and moves on, and one that
- * sent none stays expired.
+ * sent none stays expired. So a page asks again until `replay` is set, or
+ * until the run is `expired` with `committed` false.
  */
 export interface RunResult {
   readonly sessionId: string
