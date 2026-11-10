@@ -3,7 +3,7 @@
  * `vbz`, the commands an author runs.
  *
  * `build` produces the three files an upload carries. `dev` serves the game
- * the way the arcade serves it, on two origins, so the first time a game meets
+ * the way production serves it, on two origins, so the first time a game meets
  * a sandboxed cross-origin frame is on a laptop.
  *
  * Entry points are excluded from the coverage floor, so everything with a
@@ -22,11 +22,11 @@ import { type Options, parseArgs } from "./args.js"
 import { readManifestFromSim } from "./manifest.js"
 import { createGame } from "./new.js"
 
-const USAGE = `vbz - build and run a game the vbz arcade can take
+const USAGE = `vbz - build and run a game for vbz.gg
 
   vbz new   [dir]    copy a game that already conforms, and rename it
   vbz build [dir]    write dist/sim.js, dist/frame.js and dist/manifest.json
-  vbz dev   [dir]    serve the game the way the arcade does
+  vbz dev   [dir]    serve the game the way production does
 
   --sim <path>     the simulation's entry   (default src/sim/index.ts)
   --frame <path>   the frame's entry        (default src/frame.ts)

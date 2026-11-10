@@ -1,5 +1,5 @@
 /**
- * The template and the fixture are games the arcade would accept.
+ * The template and the fixture are games the platform would accept.
  *
  * This is the guard against drift. clockwork2 has templates of its own and
  * they do not ship to npm - its `files` is `dist`, `src`, `README.md` - so

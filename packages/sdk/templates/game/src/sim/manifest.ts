@@ -34,19 +34,20 @@ export const MANIFEST: Manifest = {
       ],
     },
     /**
-     * A layout the **arcade** draws, with this game's actions in its slots.
+     * A layout the **page hosting the game** draws, with this game's actions
+     * in its slots.
      *
      * Bind the slots you use and leave the rest of the layout empty: this
      * game moves sideways only, so it sits in a d-pad's left and right
-     * positions and the other two cells stay blank. The arcade owns every
-     * pixel of those buttons, which is what lets it promise they are
+     * positions and the other two cells stay blank. The SDK's renderer owns
+     * every pixel of those buttons, which is what lets it promise they are
      * thumb-sized and clear of the notch.
      *
      * If your controls are part of your art, declare `{ mode: "custom" }`
      * instead, paint them in your renderer and hit-test them in `tick`. See
      * the `paddle` fixture. And if your game needs a keyboard, leave this
-     * field out: the arcade then says so to somebody holding a phone rather
-     * than framing a canvas they cannot steer.
+     * field out: a page hosting it can then say so to somebody holding a
+     * phone rather than framing a canvas they cannot steer.
      */
     controls: {
       mode: "scheme",

@@ -9,8 +9,8 @@
  * modules without.
  *
  * What two ports do not reproduce is the second *registrable* domain. The
- * arcade serves frames from a different site so a game cannot set a cookie for
- * the platform, and two localhost ports are one site. Cookie scope is not
+ * platform serves frames from a different site so a game cannot set a cookie
+ * for the platform, and two localhost ports are one site. Cookie scope is not
  * something a game author can get wrong from inside a sandbox, so the gap is
  * worth naming and not worth closing with an /etc/hosts entry.
  */

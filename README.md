@@ -1,20 +1,21 @@
 # vbz.gg SDK
 
-The SDK for building games the [vbz](https://vbz.gg) arcade can run.
+The SDK for building games that run on [vbz.gg](https://vbz.gg), the backend
+that checks and ranks the scores of a game studio's games.
 
-A game on the arcade is a [Clockwork 2](https://github.com/vbz-gg/clockwork2)
+A game on vbz.gg is a [Clockwork 2](https://github.com/vbz-gg/clockwork2)
 simulation, so its score is something a server can check rather than trust: the
 browser records what the player pressed, the server replays that log, and the
 server's answer is the one that counts. This repository is what sits between
-that engine and the arcade.
+that engine, the vbz.gg platform and the page a studio serves its game from.
 
 It publishes one package, `@vbz-gg/sdk`, which carries:
 
 - **the on-screen control schemes**, and the renderer that draws them, so the
   pad you test against is the pad a player gets
 - **the build**, which turns a game into the two artifacts an upload carries
-- **a harness**, which frames your game locally the way the arcade does: two
-  origins, the sandbox, the CSP and the full-viewport play view
+- **a harness**, which frames your game locally the way it runs in production:
+  two origins, the sandbox, the CSP and a full-viewport page
 
 Versions up to 0.2.0 were published as `@vbz-gg/game-base`, from a
 repository of that name, and the command was `game-base`. Later versions are

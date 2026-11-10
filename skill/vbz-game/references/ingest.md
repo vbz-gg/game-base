@@ -33,7 +33,7 @@ simulation laid out as a subject directory. They are the platform-game skill's
 subject: determinism, banned APIs, no async, restore, bounded runs, counters,
 headless, assets and the rest.
 
-Plus a thirteenth the arcade owns, **seed sensitivity**: two different seeds
+Plus a thirteenth the platform owns, **seed sensitivity**: two different seeds
 on the same input log must reach different states. A game that ignores its
 seed passes all twelve - check 1 compares same-seed runs to each other, so a
 seed-blind generator is perfectly deterministic - and turns a daily board into

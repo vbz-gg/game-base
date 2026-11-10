@@ -2,9 +2,9 @@
  * Serving a game the way a platform serves it.
  *
  * The frame document, its Content-Security-Policy and the routes its two
- * artifacts are fetched from. The arcade serves production from this code and
- * the harness serves a laptop from it, so a game meets the same sandbox, the
- * same CSP and the same CORS behaviour in both.
+ * artifacts are fetched from. The harness serves a laptop from this code, and
+ * the platform serves production from its own copy with the same policy, so a
+ * game meets the same sandbox and the same CSP in both.
  */
 
 export {

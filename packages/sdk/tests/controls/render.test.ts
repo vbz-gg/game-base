@@ -176,7 +176,7 @@ describe("pressing a control", () => {
   })
 
   /**
-   * The defect this renderer exists to stop. The arcade's own pad bound
+   * The defect this renderer exists to stop. The vbz arcade's own pad bound
    * `pointerdown` and nothing else, so a held control never came up: a game
    * reading a direction change survived it, and a platformer holding `right`
    * ran into the wall for the rest of the session.

@@ -11,7 +11,8 @@ import {
 describe("the scheme table", () => {
   /**
    * The table is a contract between three places that cannot see each other:
-   * a game's manifest names a scheme, the arcade draws it, and ingest refuses
+   * a game's manifest names a scheme, a studio's page draws it, and the
+   * platform's ingest refuses
    * a name it does not know. A scheme in the list with no entry here, or an
    * entry whose id disagrees with its key, breaks one of the three silently.
    */

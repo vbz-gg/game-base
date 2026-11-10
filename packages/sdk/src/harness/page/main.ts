@@ -1,10 +1,10 @@
 /**
- * The page that frames the game, as the arcade's play view does.
+ * The page that frames the game, as a game's page in production does.
  *
  * Full viewport, one floating mark, and the controls the game's manifest asks
- * for. What it adds that the arcade does not is a scheme picker, so an author
- * can see their game under `dpad`, `dpad+2` and its own custom controls
- * without editing a manifest between each one.
+ * for. What it adds, which a game's page does not need, is a scheme picker, so
+ * an author can see their game under `dpad`, `dpad+2` and its own custom
+ * controls without editing a manifest between each one.
  *
  * This file is bundled for the browser at harness start and served from the
  * host origin. It is the only part of the harness that runs in a page.

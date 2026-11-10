@@ -1,13 +1,13 @@
 /**
- * The harness: your game, framed the way the arcade frames it.
+ * The harness: your game, framed the way production frames it.
  *
  * It builds the two real artifacts, serves them content-addressed behind a
- * frame document with the arcade's sandbox and CSP, and serves a page on a
+ * frame document with the production sandbox and CSP, and serves a page on a
  * second origin that frames it. The point is that the first time a game meets
  * a sandboxed cross-origin frame should be on a laptop rather than in an
  * upload.
  *
- * What it does not do is replay, settle or rank. That is the arcade's half,
+ * What it does not do is replay, settle or rank. That is the platform's half,
  * and a harness that pretended to do it would be teaching an author about a
  * server that does not exist.
  */
@@ -50,9 +50,9 @@ export const DEFAULT_FRAME_PORT = 4311
 /**
  * A seed that does not move between runs.
  *
- * The arcade's is a keyed HMAC of the day, so every player gets the same one;
- * here a constant does the same job, which is that a run an author is
- * debugging is the run they had a moment ago.
+ * The platform's is a keyed HMAC of the game and the day, so every player gets
+ * the same one; here a constant does the same job, which is that a run an
+ * author is debugging is the run they had a moment ago.
  */
 export const HARNESS_SEED = "harness"
 
@@ -74,9 +74,9 @@ export async function startHarness(options: HarnessOptions): Promise<Harness> {
     port: options.framePort ?? DEFAULT_FRAME_PORT,
     title,
     built,
-    // Only the harness page may frame it, which is what the arcade says of
-    // its own shell. A game that works here against a real `frame-ancestors`
-    // will not be surprised by one in production.
+    // Only the harness page may frame it, as the platform lets only a game's
+    // allowed pages frame it. A game that works here against a real
+    // `frame-ancestors` will not be surprised by one in production.
     siteOrigins: [host.origin],
     ...(options.onRequest === undefined ? {} : { log: options.onRequest }),
   })

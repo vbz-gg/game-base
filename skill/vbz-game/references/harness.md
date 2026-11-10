@@ -1,6 +1,6 @@
 # The harness
 
-`vbz dev ./my-game` is the arcade's play view on a laptop. It builds the
+`vbz dev ./my-game` is your game's page on a laptop. It builds the
 two real artifacts, serves them behind the real frame document with the real
 sandbox and CSP on one port, and serves the page that frames them on another.
 
@@ -32,7 +32,7 @@ posts no `ready`, and shows a blank game with no error anywhere.
 
 ## What the page gives you
 
-- **The pad your manifest asked for**, drawn by the same code the arcade
+- **The pad your manifest asked for**, drawn by the same code a studio's page
   draws it with.
 - **A picker** that switches between every scheme, `custom` and `off` without
   editing the manifest. Under a scheme your game did not declare, the slots you
@@ -41,13 +41,13 @@ posts no `ready`, and shows a blank game with no error anywhere.
 - **Start and End.** End stops the run where it stands, which is how to get a
   recording out of a game you do not intend to lose at.
 - **The recording**, published once every chunk of it has arrived, with a link
-  to save it. It is the same envelope the arcade would replay.
+  to save it. It is the same envelope the platform would replay.
 - **A status line** carrying what the bridge is saying: `ready`, the tick
   count, how the run ended and what it scored.
 
 The seed is a constant, so the run you are debugging is the run you had a
-moment ago. The arcade's is a keyed HMAC of the day, which does the same job
-for everybody at once.
+moment ago. The platform's daily seed is a keyed HMAC of the game and the day,
+which does the same job for everybody at once.
 
 ## What it does not reproduce
 
@@ -55,7 +55,7 @@ for everybody at once.
   site so a game cannot set a cookie for the platform. Two ports on localhost
   are one site. Cookie scope is not something a game can get wrong from inside
   a sandbox, so this gap is named rather than closed.
-- **Replay, settlement and ranking.** That half is the arcade's, and a harness
+- **Replay, settlement and ranking.** That half is the platform's, and a harness
   that pretended to do it would be teaching you about a server that does not
   exist.
 - **The conformance suite and the cross-engine sweep.** Use the platform-game

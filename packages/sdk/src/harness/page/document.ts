@@ -1,11 +1,11 @@
 /**
- * The harness page, shaped like the arcade's play view.
+ * The harness page, shaped like a game's page in production.
  *
  * The game gets the whole viewport, one floating mark sits over it, and the
  * controls are drawn on top. The picker, the status line and the
- * two run buttons are what the arcade does not have: an author needs to
+ * two run buttons are what a game's page does not need: an author needs to
  * switch schemes without editing a manifest, needs to see what the bridge is
- * saying, and needs the run's recording, which is the evidence the arcade
+ * saying, and needs the run's recording, which is the evidence the platform
  * would replay.
  *
  * The config travels in a JSON script block rather than in the URL, so a seed

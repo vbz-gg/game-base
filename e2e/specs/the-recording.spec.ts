@@ -1,7 +1,7 @@
 /**
  * The run the browser played, replayed away from it.
  *
- * This is the claim the arcade is built on, checked here so an author meets
+ * This is the claim the platform is built on, checked here so an author meets
  * it on a laptop: the input log a browser produced, replayed against the same
  * simulation, reaches the same counters at the same tick. The simulation is
  * fetched from the frame origin at its content address rather than imported

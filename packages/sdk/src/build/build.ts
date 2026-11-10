@@ -1,11 +1,11 @@
 /**
  * Building a game's source into the two artifacts an upload carries.
  *
- * The arcade takes built bundles and never source, so this is not a step it
+ * The platform takes built bundles and never source, so this is not a step it
  * runs - it is how an author produces what they upload, and how the harness
  * produces what it serves locally. Anyone is free to build another way: what
  * has to be reproduced is the shape of the output, which `contract.ts`
- * describes and the arcade re-checks on arrival.
+ * describes and the platform re-checks on arrival.
  */
 
 import {

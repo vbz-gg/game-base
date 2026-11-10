@@ -1,10 +1,10 @@
 /**
  * Drawing a control scheme, in plain DOM.
  *
- * Plain DOM rather than a component, because the arcade's shell is React and
- * the local harness is not, and a component would make one of them wrap the
- * other. What both get instead is a function that takes an element and hands
- * back two more.
+ * Plain DOM rather than a component, because a studio's page may use React,
+ * another framework or none, and the local harness uses none, so a component
+ * would make every other host wrap it. What every host gets instead is a
+ * function that takes an element and hands back two more.
  *
  * It carries no colour of its own. Layout, hit target and safe-area clearance
  * are set here because a host cannot be trusted to keep them and a player
@@ -107,8 +107,8 @@ function styleRoot(root: HTMLElement, layout: "pad" | "full"): void {
 /**
  * Draws a scheme into `element` and reports presses.
  *
- * `element` needs its own positioning context; the controls fill it. In the
- * arcade that is the play view, which is the whole viewport with the game
+ * `element` needs its own positioning context; the controls fill it. On a
+ * game's page that is usually the play view, the whole viewport with the game
  * behind it, so the pad sits over the game's own letterbox margin where there
  * is one and over its art where there is not.
  */

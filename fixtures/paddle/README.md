@@ -2,7 +2,7 @@
 
 A game whose controls are its own.
 
-`inputs.controls` is `{ mode: "custom" }`, so the arcade draws nothing. The
+`inputs.controls` is `{ mode: "custom" }`, so the host draws nothing. The
 grab bar along the bottom is painted by `src/present/canvas.ts` and hit-tested
 by `src/sim/index.ts`, and both read the same `GRAB_TOP` constant - which is
 the whole contract of the custom path. A control drawn somewhere the
