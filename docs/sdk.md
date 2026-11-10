@@ -24,10 +24,11 @@ build against it before an upload, and a pad drawn one way locally and another
 way in production is a scaffold that lies to the person who trusted it. That
 set of decisions is this package.
 
-So the SDK owns four things, one per subpath export:
+So the SDK owns five things, one per subpath export:
 
 | Subpath | What it is |
 |---|---|
+| `/api` | The shapes of the platform's public routes, as types only |
 | `/controls` | The scheme table and the renderer that draws it |
 | `/build` | A game's source to the two artifacts an upload carries |
 | `/serve` | The frame document, its CSP, and the routes the artifacts are fetched from |
@@ -37,10 +38,27 @@ Beside them the package ships a CLI (`vbz new | build | dev`), the
 template `new` copies, and `skill/vbz-game/`, which is the same material
 written for an agent to follow literally.
 
-The platform imports `/build` and `/controls`, so it checks an upload against
-the contract and the scheme table an author builds with. It serves its own copy
-of the frame document `/serve` writes, with the same policy. A studio's page
-draws the pad with `/controls`. An author runs `/harness`.
+The platform imports `/api`, and declares each public route's answer with its
+types. It imports `/build` and `/controls`, so it checks an upload against
+the contract and the scheme table an author builds with. It serves the frame
+document and the two artifacts with `/serve`, the code the harness serves a
+laptop with. A studio's page
+types its calls with `/api` and draws the pad with `/controls`. An author runs
+`/harness`.
+
+## The platform's route shapes
+
+`/api` is types only: every route a game's page or a build system calls,
+keyed by method and path in `PlatformRoutes`, with its credential, its body
+and its answer, and `PublicRefusalCode`, every refusal those routes answer by
+name. It compiles to an empty module, so importing it adds nothing to a
+bundle, and a test holds it to exporting no value.
+
+The types live here and not in the platform so the dependency runs one way.
+The platform depends on this package and this package on nothing of the
+platform's, so a change to a route's shape lands here first, is released, and
+is then taken by the platform. The platform's build fails when one of its
+routes answers a shape, or a refusal code, these types do not name.
 
 ## Controls
 

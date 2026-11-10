@@ -82,6 +82,20 @@ Leaving `controls` out says your game wants a keyboard. A page hosting it can
 read that from the manifest and tell a phone player so, rather than framing a
 canvas they cannot steer.
 
+## Typing your calls to the platform
+
+`@vbz-gg/sdk/api` holds the shapes of every route a game's page or a build
+system calls on vbz.gg, as TypeScript types only:
+
+```ts
+import type { PlatformRoutes, PublicRefusalCode, StartedRun } from "@vbz-gg/sdk/api"
+
+type Board = PlatformRoutes["GET /v1/board"]["response"]
+```
+
+A refusal arrives as `{ error, message }`, where `error` is one of
+`PublicRefusalCode`. Switch on the code, never on the status.
+
 ## Using the renderer yourself
 
 If you are building a host rather than a game:
