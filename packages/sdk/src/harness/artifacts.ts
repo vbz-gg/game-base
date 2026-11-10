@@ -7,8 +7,8 @@
  * taken over bytes that already name one simulation, so a frame can name
  * exactly one sim, forever.
  *
- * This is the same sequence the arcade performs on an upload, which is why the
- * harness serves what production would serve rather than something that
+ * This is the same sequence the platform performs on an upload, which is why
+ * the harness serves what production would serve rather than something that
  * resembles it.
  */
 

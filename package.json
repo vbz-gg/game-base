@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "The SDK for building games the vbz arcade can run",
+  "description": "The SDK for building games that run on vbz.gg",
   "license": "MIT",
   "author": "Ramesh Nair",
   "repository": {

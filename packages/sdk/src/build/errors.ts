@@ -3,7 +3,7 @@
  *
  * One code per refusal, so a deploy script can switch on it and a host can map
  * it to a status from a table rather than a chain of instanceof checks. The
- * arcade reports the same codes for an upload it refuses, because it runs
+ * platform reports the same codes for an upload it refuses, because it runs
  * these same checks on the bytes it was given.
  */
 

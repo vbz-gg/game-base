@@ -7,17 +7,19 @@ page.
 
 ## Three repositories, one game
 
-A game on the vbz arcade is a [Clockwork 2](https://github.com/vbz-gg/clockwork2)
+A game on [vbz.gg](https://vbz.gg) is a [Clockwork 2](https://github.com/vbz-gg/clockwork2)
 simulation. The engine owns determinism: the seed, `dmath`, the manifest, the
 recording format and the bridge between a page and the frame a game runs in. It
-knows nothing about arcades.
+knows nothing about vbz.gg.
 
-The [arcade](https://github.com/vbz-gg/arcade) owns the platform: accounts,
-ingest, the daily seed, the server-side replay, the board.
+The vbz.gg platform is the backend for game studios. It owns studios and their
+keys, player sign-in, the checks on an upload, the daily seed, the server-side
+replay and the board. A studio serves its game from its own page, which frames
+the game document the platform serves.
 
 Between them sits a set of decisions that belong to neither. What a d-pad looks
 like is not the engine's business, because the engine is general. It is also
-not something the arcade can own alone, because an author has to be able to
+not something the platform can own alone, because an author has to be able to
 build against it before an upload, and a pad drawn one way locally and another
 way in production is a scaffold that lies to the person who trusted it. That
 set of decisions is this package.
@@ -35,7 +37,10 @@ Beside them the package ships a CLI (`vbz new | build | dev`), the
 template `new` copies, and `skill/vbz-game/`, which is the same material
 written for an agent to follow literally.
 
-The arcade imports the first three. An author runs the fourth.
+The platform imports `/build` and `/controls`, so it checks an upload against
+the contract and the scheme table an author builds with. It serves its own copy
+of the frame document `/serve` writes, with the same policy. A studio's page
+draws the pad with `/controls`. An author runs `/harness`.
 
 ## Controls
 
@@ -61,7 +66,8 @@ all.
 **Absent** says the game needs a keyboard. Before `inputs.controls` existed,
 an absent field meant both "I draw my own" and "I need a keyboard" and nothing
 could tell them apart, so a phone got a canvas it could not steer with no way
-to say so. The arcade now marks such a game on its page.
+to say so. A page hosting such a game can read that from its manifest and tell
+a phone player before a run starts.
 
 A game does not upload control art for the host to render. That is a possible
 later change, and it costs a third artifact kind: contract checks, storage
@@ -94,9 +100,9 @@ row in this table.
 ### What the renderer owns
 
 `mountControls(element, options)` draws into an element and hands back
-`update` and `destroy`. Plain DOM rather than a component: the arcade's shell
-is React and the harness is not, and a component would make one of them wrap
-the other.
+`update` and `destroy`. Plain DOM rather than a component: a studio's page may
+use React, another framework or none, and the harness uses none, so a
+component would make every other host wrap it.
 
 It sets layout, hit target and safe-area clearance itself, and takes every
 colour from a CSS custom property with a fallback, so a host restyles it by
@@ -110,12 +116,13 @@ and around them reaches the game underneath, which is what lets the pad sit
 over a game's letterbox margin where there is one and over its art where there
 is not.
 
-**A control that goes down must come up.** The arcade's first pad bound
-`pointerdown` and nothing else, so a held control never released: a game
-reading a direction change survived it, and a platformer holding `right` ran
-into the wall for the rest of the session. `pointerup`, `pointercancel` and
-`lostpointercapture` all release. So do `update()` and `destroy()`, because a
-button that is about to stop existing will never send an event of its own.
+**A control that goes down must come up.** The pad the vbz arcade drew before
+this package existed bound `pointerdown` and nothing else, so a held control
+never released: a game reading a direction change survived it, and a
+platformer holding `right` ran into the wall for the rest of the session.
+`pointerup`, `pointercancel` and `lostpointercapture` all release. So do
+`update()` and `destroy()`, because a button that is about to stop existing
+will never send an event of its own.
 A press also takes a pointer capture, so a finger that slides off the button
 still sends its release to that button rather than to whatever is underneath.
 
@@ -190,7 +197,7 @@ is what makes "the browser and the validator ran the same code" checkable
 rather than asserted.
 
 `buildAndAddress` in `/harness` performs that whole sequence, which is the
-same one the arcade performs on an upload. The CLI's `build` command writes
+same one the platform performs on an upload. The CLI's `build` command writes
 the frame **unrewritten**, with its `cw2:sim` intact: a frame that arrived
 already pointing somewhere would be a frame naming a module nobody checked.
 
@@ -240,8 +247,8 @@ repository, at the same path relative to the CLI in the source tree and in
 
 `vbz dev ./my-game` builds the two real artifacts and serves them behind
 the frame document above, then serves a page on a **second port** that frames
-it the way the arcade's play view does: full viewport, the floating mark, the
-pad the manifest asked for.
+it the way a game's page would: full viewport, the floating mark, the pad the
+manifest asked for.
 
 Two ports are two origins, which is what puts an author in front of the traps a
 sandboxed cross-origin frame actually has rather than after an upload. What two
@@ -251,31 +258,30 @@ and two ports on localhost are one site. Cookie scope is not something a game
 author can get wrong from inside a sandbox, so the gap is named rather than
 closed with an `/etc/hosts` entry.
 
-The page adds three things the arcade does not have. A **picker** switches
-between every scheme, `custom` and `off` without editing a manifest; under a
-scheme the game did not declare, the slots it did not bind are bound to their
-own names so the layout is visible and plainly inert. **Start** and **End**
-drive the session. And when a run ends, the page collects the recording's
-chunks and publishes the whole thing, so an author can read or save the
-evidence the arcade would replay.
+The page adds three things a game's page in production does not need. A
+**picker** switches between every scheme, `custom` and `off` without editing a
+manifest; under a scheme the game did not declare, the slots it did not bind
+are bound to their own names so the layout is visible and plainly inert.
+**Start** and **End** drive the session. And when a run ends, the page
+collects the recording's chunks and publishes the whole thing, so an author can
+read or save the evidence the platform would replay.
 
 The seed is a constant, so a run an author is debugging is the run they had a
-moment ago. The arcade's is a keyed HMAC of the day, which does the same job
-for a different reason.
+moment ago. The platform's daily seed is a keyed HMAC of the game and the day,
+which does the same job for a different reason. A studio can also give each
+ranked run a seed of its own.
 
-What the harness does not do is replay, settle or rank. That is the arcade's
-half, and a harness pretending to do it would be teaching an author about a
-server that does not exist.
+What the harness does not do is replay, settle or rank. That is the
+platform's half, and a harness pretending to do it would be teaching an author
+about a server that does not exist.
 
 ## The package
 
 `@vbz-gg/sdk` is `"sideEffects": false` with one export per half, so
 importing `/controls` pulls the scheme table and a DOM renderer and nothing
-else. That matters because the arcade's shell imports `/controls` into a
-browser bundle: that subpath may reach no node built-in and no part of the CLI
-or the harness. The arcade has a bundle guard with a list of names its shell
-may not pull in, and the SDK's server-side names join it when the arcade
-takes this dependency.
+else. That matters because a studio's page imports `/controls` into a browser
+bundle: that subpath may reach no node built-in and no part of the CLI or the
+harness.
 
 Every relative import inside `src/` carries `.js`, and a directory import
 carries the whole `/index.js`. `tsc` emits a relative specifier exactly as the

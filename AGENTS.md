@@ -9,7 +9,8 @@ a manifest or an input.
 
 This repository sits between two others. [clockwork2](https://github.com/vbz-gg/clockwork2)
 is the engine and owns determinism, the manifest and the host bridge; the
-[arcade](https://github.com/vbz-gg/arcade) runs the platform.
+[platform](https://github.com/vbz-gg/platform) is the backend that checks an
+upload, replays a run and ranks it. A studio serves its game from its own page.
 
 ## Commands
 
@@ -29,16 +30,18 @@ Never start a dev server. Ask the user to run it.
 
 ## The one rule
 
-**The arcade and this repository draw the same pad, because they run the same
-code.** A scheme the arcade renders differently from the harness is a scaffold
-that lies to the author who trusted it, and they find out when a player does.
-So the scheme table and the renderer live here, the arcade imports them, and
-nothing about a layout is re-derived on either side.
+**A studio's page and the harness draw the same pad, because they run the same
+code.** A scheme a studio's page renders differently from the harness is a
+scaffold that lies to the author who trusted it, and they find out when a
+player does. So the scheme table and the renderer live here, studios' pages
+and the platform import them, and nothing about a layout is re-derived
+anywhere else.
 
 That is also why the renderer is plain DOM behind
-`mountControls(element, options)` rather than a component. The arcade's shell
-is React and the harness is not; a component would make one of them wrap the
-other, and a wrapper is where a difference starts.
+`mountControls(element, options)` rather than a component. A studio's page may
+use React, another framework or none, and the harness uses none; a component
+would make every other host wrap it, and a wrapper is where a difference
+starts.
 
 ## Working on controls
 
@@ -88,9 +91,10 @@ package would notice that file missing.
 
 `skill/vbz-game/` is prose an agent follows literally, so a stale sentence
 is worse than a missing one. It has one subject: everything between a
-conforming simulation and a game the arcade can run. Determinism belongs to
-clockwork2's `platform-game`, and this one points at it rather than repeating
-it - two copies of that rulebook is how one of them goes quietly out of date.
+conforming simulation and a game the platform can check and replay.
+Determinism belongs to clockwork2's `platform-game`, and this one points at it
+rather than repeating it - two copies of that rulebook is how one of them goes
+quietly out of date.
 
 `skill/tests/skill.test.ts` measures the drift a machine can see: every scheme
 and slot in the reference matches `SCHEMES`, the size caps and the 44px

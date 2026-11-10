@@ -77,7 +77,7 @@ test("a tap on a control reaches the recording, and so does letting go", async (
 })
 
 /**
- * The failure the arcade's first pad shipped with.
+ * The failure the vbz arcade's first pad shipped with, before this package.
  *
  * It bound `pointerdown` and nothing else, so a held control never released
  * and a platformer holding `right` ran into the wall for the rest of the

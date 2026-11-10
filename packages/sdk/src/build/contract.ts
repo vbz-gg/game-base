@@ -10,8 +10,8 @@
  *
  * These checks run twice and on purpose. `buildGameArtifacts` runs them on its
  * own output, so a build that quietly inlined the simulation fails where the
- * person who caused it is standing. The arcade runs them again on the bytes it
- * was uploaded, because it never trusts how something was built.
+ * person who caused it is standing. The platform runs them again on the bytes
+ * it was uploaded, because it never trusts how something was built.
  */
 
 import { refuse } from "./errors.js"

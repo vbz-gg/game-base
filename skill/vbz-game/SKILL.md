@@ -1,9 +1,9 @@
 ---
 name: vbz-game
-description: Build a game the vbz arcade can run, on top of a Clockwork 2 simulation - the two artifacts an upload carries, the manifest the platform reads without running anything, on-screen controls for a phone, and the sandboxed cross-origin frame a game plays inside. Use when starting a game for the arcade, choosing or binding controls, writing the frame entry, testing against the harness, or working out why ingest refused an upload. For the simulation's own rules - fixed ticks, seeded randomness, dmath, snapshots - use the platform-game skill instead.
+description: Build a game that runs on vbz.gg, the backend that checks and ranks a game studio's scores, on top of a Clockwork 2 simulation - the two artifacts an upload carries, the manifest the platform reads without running anything, on-screen controls for a phone, and the sandboxed cross-origin frame a game plays inside. Use when starting a game for vbz.gg, choosing or binding controls, writing the frame entry, testing against the harness, or working out why ingest refused an upload. For the simulation's own rules - fixed ticks, seeded randomness, dmath, snapshots - use the platform-game skill instead.
 ---
 
-# Building a game the arcade can run
+# Building a game that runs on vbz.gg
 
 Two skills, and they do not overlap. **platform-game** is how to write a
 simulation that replays to the same state on somebody else's server: fixed
@@ -18,7 +18,7 @@ it.
 ```bash
 bunx @vbz-gg/sdk new ./my-game
 cd ./my-game && bun install
-bun run dev                       # your game, framed the way the arcade frames it
+bun run dev                       # your game, framed the way it runs in production
 ```
 
 The copy builds and plays before a line of it is changed, so anything that
@@ -33,7 +33,7 @@ src/sim/index.ts     the simulation's entry: default export + MANIFEST
 src/sim/manifest.ts  what the platform reads without running anything
 src/sim/game.ts      the rules
 src/present/         the renderer
-src/frame.ts         the page the game runs in, inside the arcade's frame
+src/frame.ts         the page the game runs in, inside the platform's frame
 ```
 
 Two entries, and they become two files:
@@ -86,8 +86,8 @@ renderer: a game may not construct an input event, and a renderer that decided
 which control was pressed would be deciding the result on the client.
 
 **Nothing.** Leave the field out and you have said the game needs a keyboard.
-The arcade marks it as such rather than handing a phone a canvas it cannot
-steer.
+A page hosting it can read that from the manifest and tell a phone player,
+rather than handing them a canvas they cannot steer.
 
 Every action a control sends must appear in `inputs.map`. That is checked.
 
@@ -109,7 +109,7 @@ listens for keys and nothing else and cannot be touched at all.
 
 ## Testing it
 
-`bun run dev` is the arcade's play view on your laptop: the game in a sandboxed
+`bun run dev` is your game's page on your laptop: the game in a sandboxed
 frame on one origin, the page that frames it on another, the pad your manifest
 asked for drawn over it. Two ports are two origins, so the traps a sandboxed
 cross-origin frame actually has turn up here rather than in an upload.
@@ -175,4 +175,4 @@ about determinism:
 
 - `vbz new <dir>` - a game that already conforms.
 - `vbz build <dir>` - the three files a submission carries.
-- `vbz dev <dir>` - the arcade's play view, locally, on two origins.
+- `vbz dev <dir>` - your game's page, locally, on two origins.

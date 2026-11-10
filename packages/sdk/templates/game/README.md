@@ -1,11 +1,11 @@
 # Lane Runner
 
-A starting point for a game the vbz arcade can run. Three lanes, rocks coming
+A starting point for a game that runs on vbz.gg. Three lanes, rocks coming
 towards you, motes to collect.
 
 ```bash
 bun install
-bun run dev      # play it, framed the way the arcade frames it
+bun run dev      # play it, framed the way it runs in production
 bun run build    # the three files an upload carries
 ```
 
@@ -28,7 +28,8 @@ at all.
 
 ## Controls
 
-This game declares a scheme, so the **arcade** draws its buttons:
+This game declares a scheme, so the **page hosting it** draws its buttons,
+with the SDK's renderer:
 
 ```ts
 controls: { mode: "scheme", scheme: "dpad", bind: { left: "left", right: "right" } }
@@ -42,5 +43,5 @@ editing this file.
 If your controls are part of your art, declare `{ mode: "custom" }`, paint
 them in your renderer and hit-test them in `tick` - the `paddle` fixture is
 the worked example. If your game needs a keyboard, leave `controls` out
-entirely, and the arcade tells a phone player so rather than handing them a
-canvas they cannot steer.
+entirely. A page hosting it can then tell a phone player so, rather than
+handing them a canvas they cannot steer.

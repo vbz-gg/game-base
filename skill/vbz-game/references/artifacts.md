@@ -9,7 +9,7 @@ A game version is two files, each stored under the SHA-256 of its own bytes.
 
 ## Why the frame imports rather than embeds
 
-The claim the arcade rests on is that replaying your input log reproduces your
+The claim the platform rests on is that replaying your input log reproduces your
 score. That is worth nothing if the simulation your browser ran is not the
 simulation the server runs, and two copies of one source, built twice, is not
 the same thing as one file.
@@ -47,7 +47,7 @@ import { PLAYFIELD, type View } from "cw2:sim"
 ## The frame writes a checkpoint each second
 
 The template's frame passes `checkpointEvery: MANIFEST.session.tickHz` to
-`GameHost`. Keep it that way when you change `tickHz`. The arcade replays a
+`GameHost`. Keep it that way when you change `tickHz`. The platform replays a
 run with one checkpoint per second of play, so a frame that wrote them every
 60 ticks would agree at 60 Hz and disagree on every run at 30 or 120 Hz, and
 each of those runs would count against your game.

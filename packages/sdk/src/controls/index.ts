@@ -3,7 +3,7 @@
  *
  * Importing this subpath pulls the scheme table and a DOM renderer and
  * nothing else: the package is `sideEffects: false` and this half reaches no
- * node built-in, because the arcade's shell imports it into a browser bundle.
+ * node built-in, because a studio's page imports it into a browser bundle.
  */
 
 export {

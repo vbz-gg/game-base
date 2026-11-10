@@ -91,7 +91,7 @@ describe("what the prose restates from the code", () => {
   /**
    * A code in the prose that the code does not raise sends an author looking
    * for a failure that cannot happen. Only the artifact refusals are checked
-   * here: the manifest and rank codes belong to the arcade and cannot be
+   * here: the manifest and rank codes belong to the platform and cannot be
    * imported from this repository.
    */
   test("every artifact refusal named is one that exists", async () => {

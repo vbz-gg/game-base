@@ -5,9 +5,9 @@
  * bridge rather than in the URL, where it would reach a referrer and a server
  * log.
  *
- * This game declares a control scheme, so the arcade draws its buttons and
- * sends each press as a `virtual-input`; `InputCapture` turns that into an
- * action without this file doing anything. A game declaring
+ * This game declares a control scheme, so the page hosting it draws its
+ * buttons and sends each press as a `virtual-input`; `InputCapture` turns that
+ * into an action without this file doing anything. A game declaring
  * `{ mode: "custom" }` instead has to pass `pointerTarget` and `viewport`
  * here, or it will listen for keys and nothing else and cannot be touched at
  * all. See the `paddle` fixture.
