@@ -18,6 +18,11 @@
     "README.md"
   ],
   "exports": {
+    "./api": {
+      "development": "./src/api/index.ts",
+      "types": "./dist/api/index.d.ts",
+      "default": "./dist/api/index.js"
+    },
     "./controls": {
       "development": "./src/controls/index.ts",
       "types": "./dist/controls/index.d.ts",

@@ -2,9 +2,9 @@
  * The game document, and the headers that make it safe to serve.
  *
  * This is the page a stranger's game runs inside. The harness serves it
- * locally from this code, and the platform serves its own copy with the same
- * policy in production, so a game that works in one works in the other and an
- * author meets the sandbox before an upload rather than after.
+ * locally from this code and the platform serves it in production from the
+ * same code, so a game that works in one works in the other and an author
+ * meets the sandbox before an upload rather than after.
  */
 
 export interface FrameDocumentInput {

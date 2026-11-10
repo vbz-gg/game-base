@@ -43,6 +43,15 @@ use React, another framework or none, and the harness uses none; a component
 would make every other host wrap it, and a wrapper is where a difference
 starts.
 
+## The platform's route shapes
+
+`packages/sdk/src/api/` declares every public route the platform serves, as
+types only, and the platform imports it. **A route's shape changes here
+first**: released, then taken by the platform, never the other way round,
+because the platform depends on this package and this package on nothing of
+the platform's. Within `/v1` a change only adds. `packages/sdk/tests/api.test.ts`
+holds the subpath to exporting no value, because a studio's page bundles it.
+
 ## Working on controls
 
 `docs/sdk.md` has the three answers a manifest can give, the scheme table and
