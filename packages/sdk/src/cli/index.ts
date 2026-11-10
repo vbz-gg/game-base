@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * `game-base`, the two commands an author runs.
+ * `vbz`, the commands an author runs.
  *
  * `build` produces the three files an upload carries. `dev` serves the game
  * the way the arcade serves it, on two origins, so the first time a game meets
@@ -22,11 +22,11 @@ import { type Options, parseArgs } from "./args.js"
 import { readManifestFromSim } from "./manifest.js"
 import { createGame } from "./new.js"
 
-const USAGE = `game-base - build and run a game the vbz arcade can take
+const USAGE = `vbz - build and run a game the vbz arcade can take
 
-  game-base new   [dir]    copy a game that already conforms, and rename it
-  game-base build [dir]    write dist/sim.js, dist/frame.js and dist/manifest.json
-  game-base dev   [dir]    serve the game the way the arcade does
+  vbz new   [dir]    copy a game that already conforms, and rename it
+  vbz build [dir]    write dist/sim.js, dist/frame.js and dist/manifest.json
+  vbz dev   [dir]    serve the game the way the arcade does
 
   --sim <path>     the simulation's entry   (default src/sim/index.ts)
   --frame <path>   the frame's entry        (default src/frame.ts)

@@ -18,15 +18,15 @@ import {
   MAX_FRAME_BYTES,
   MAX_SIM_BYTES,
   SIM_SPECIFIER,
-} from "../../packages/game-base/src/build/index.js"
-import { TEMPLATE_DIR } from "../../packages/game-base/src/cli/new.js"
+} from "../../packages/sdk/src/build/index.js"
+import { TEMPLATE_DIR } from "../../packages/sdk/src/cli/new.js"
 import {
   CONTROL_SCHEMES,
   MIN_TOUCH_PX,
   SCHEMES,
-} from "../../packages/game-base/src/controls/index.js"
+} from "../../packages/sdk/src/controls/index.js"
 
-const SKILL = join(import.meta.dir, "..", "arcade-game")
+const SKILL = join(import.meta.dir, "..", "vbz-game")
 const REFERENCES = join(SKILL, "references")
 
 async function read(...parts: string[]): Promise<string> {
@@ -37,7 +37,7 @@ describe("the skill's front matter", () => {
   test("it names itself and says when to use it", async () => {
     const text = await read("SKILL.md")
     const front = text.split("---")[1] ?? ""
-    expect(front).toContain("name: arcade-game")
+    expect(front).toContain("name: vbz-game")
     expect(front).toContain("description:")
     // The description is what an agent matches against, so it has to name
     // the things this skill is for rather than the repository it lives in.
@@ -126,7 +126,7 @@ describe("what the skill tells an author to run", () => {
         "..",
         "..",
         "packages",
-        "game-base",
+        "sdk",
         "src",
         "cli",
         "index.ts",
@@ -135,7 +135,7 @@ describe("what the skill tells an author to run", () => {
     )
     const text = await read("SKILL.md")
     for (const command of ["new", "build", "dev"]) {
-      expect(text).toContain(`game-base ${command}`)
+      expect(text).toContain(`vbz ${command}`)
       expect(cli).toContain(`case "${command}"`)
     }
   })

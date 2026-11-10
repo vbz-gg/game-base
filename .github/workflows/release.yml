@@ -116,7 +116,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && !inputs.dry_run
         run: |
           set -euo pipefail
-          before="$(node -p "require('./packages/game-base/package.json').version")"
+          before="$(node -p "require('./packages/sdk/package.json').version")"
           # Nothing since the last tag means nothing to release. Cutting one
           # anyway is what produced clockwork2's 0.6.0: a dispatch landed on a
           # tree that had already been released a moment earlier, bumped it
@@ -139,7 +139,7 @@ jobs:
             --release-as "${{ inputs.release_as }}" \
             --skip.tag \
             --scripts.prerelease=""
-          after="$(node -p "require('./packages/game-base/package.json').version")"
+          after="$(node -p "require('./packages/sdk/package.json').version")"
           # A bump that changed nothing would publish nothing and say it
           # succeeded, which is the failure this whole step exists to end.
           if [ "$before" = "$after" ]; then
@@ -189,7 +189,7 @@ jobs:
         run: |
           set -euo pipefail
           # Read after the bump, so it is the version that was published.
-          version="$(node -p "require('./packages/game-base/package.json').version")"
+          version="$(node -p "require('./packages/sdk/package.json').version")"
           tag="v$version"
           if gh release view "$tag" >/dev/null 2>&1; then
             echo "$tag is already released"
@@ -226,8 +226,8 @@ jobs:
             echo "no ENGINE_RELEASED_TOKEN; the platform's daily check will pick this up" >&2
             exit 0
           fi
-          version="$(node -p "require('./packages/game-base/package.json').version")"
+          version="$(node -p "require('./packages/sdk/package.json').version")"
           echo "telling vbz-gg/platform about $version"
           gh api repos/vbz-gg/platform/dispatches \
-            -f event_type=game-base-released \
+            -f event_type=sdk-released \
             -f "client_payload[version]=$version"

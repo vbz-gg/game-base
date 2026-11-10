@@ -1,7 +1,7 @@
-# How game-base works
+# How the SDK works
 
 This explains the SDK from first principles, for somebody who has not seen it.
-`README.md` says what the repository is, `packages/game-base/README.md` is what
+`README.md` says what the repository is, `packages/sdk/README.md` is what
 a game author reads, and `AGENTS.md` is the working guidance that assumes this
 page.
 
@@ -22,7 +22,7 @@ build against it before an upload, and a pad drawn one way locally and another
 way in production is a scaffold that lies to the person who trusted it. That
 set of decisions is this package.
 
-So game-base owns four things, one per subpath export:
+So the SDK owns four things, one per subpath export:
 
 | Subpath | What it is |
 |---|---|
@@ -31,8 +31,8 @@ So game-base owns four things, one per subpath export:
 | `/serve` | The frame document, its CSP, and the routes the artifacts are fetched from |
 | `/harness` | Both of those, wired into a local two-origin play view |
 
-Beside them the package ships a CLI (`game-base new | build | dev`), the
-template `new` copies, and `skill/arcade-game/`, which is the same material
+Beside them the package ships a CLI (`vbz new | build | dev`), the
+template `new` copies, and `skill/vbz-game/`, which is the same material
 written for an agent to follow literally.
 
 The arcade imports the first three. An author runs the fourth.
@@ -226,7 +226,7 @@ names an artifact by hash and a rebuild changes that hash.
 
 ## Starting a game
 
-`game-base new ./my-game` copies the template out of the package and renames
+`vbz new ./my-game` copies the template out of the package and renames
 it: the game's id comes from the directory, because an id is immutable once
 published and a placeholder somebody forgets is a board under the wrong name.
 The copy builds and plays before anything is changed, so an author's first
@@ -238,7 +238,7 @@ repository, at the same path relative to the CLI in the source tree and in
 
 ## The harness
 
-`game-base dev ./my-game` builds the two real artifacts and serves them behind
+`vbz dev ./my-game` builds the two real artifacts and serves them behind
 the frame document above, then serves a page on a **second port** that frames
 it the way the arcade's play view does: full viewport, the floating mark, the
 pad the manifest asked for.
@@ -269,12 +269,12 @@ server that does not exist.
 
 ## The package
 
-`@vbz-gg/game-base` is `"sideEffects": false` with one export per half, so
+`@vbz-gg/sdk` is `"sideEffects": false` with one export per half, so
 importing `/controls` pulls the scheme table and a DOM renderer and nothing
 else. That matters because the arcade's shell imports `/controls` into a
 browser bundle: that subpath may reach no node built-in and no part of the CLI
 or the harness. The arcade has a bundle guard with a list of names its shell
-may not pull in, and game-base's server-side names join it when the arcade
+may not pull in, and the SDK's server-side names join it when the arcade
 takes this dependency.
 
 Every relative import inside `src/` carries `.js`, and a directory import
@@ -289,7 +289,7 @@ The same check covers a file the package **reads** rather than imports. The
 harness bundles its page script when it starts, from a path built off
 `import.meta.dir`, which resolves to the TypeScript here and has to resolve to
 the compiled file in an installed copy. Nothing that imports the package would
-notice its absence; the failure would arrive when somebody ran `game-base dev`.
+notice its absence; the failure would arrive when somebody ran `vbz dev`.
 
 `@clockwork2/engine` is a **peer** dependency. A game installs the engine
 itself - its simulation and its frame both import it - and the manifest, the

@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Publishes `@vbz-gg/game-base`.
+ * Publishes `@vbz-gg/sdk`.
  *
  * Authentication is npm Trusted Publishing: the release workflow grants
  * `id-token: write`, the npm CLI exchanges that OIDC token for a short-lived
@@ -25,7 +25,7 @@
 import { readFileSync } from "node:fs"
 import { $ } from "bun"
 
-const PACKAGE_DIR = "packages/game-base"
+const PACKAGE_DIR = "packages/sdk"
 
 /**
  * Whether `npm view <name>@<version> version` says the registry has it.

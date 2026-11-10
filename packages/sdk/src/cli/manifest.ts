@@ -21,7 +21,7 @@ import { join } from "node:path"
  * throws on import" are different problems and the author needs to know which.
  */
 export async function readManifestFromSim(sim: Uint8Array): Promise<unknown> {
-  const dir = await mkdtemp(join(tmpdir(), "game-base-manifest-"))
+  const dir = await mkdtemp(join(tmpdir(), "sdk-manifest-"))
   const path = join(dir, "sim.js")
   try {
     await writeFile(path, sim)

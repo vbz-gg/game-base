@@ -4,12 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "game-base dev .",
-    "build": "game-base build ."
+    "dev": "vbz dev .",
+    "build": "vbz build ."
   },
   "devDependencies": {
     "@clockwork2/engine": "0.8.0",
-    "@vbz-gg/game-base": "^0.1.0",
+    "@vbz-gg/sdk": "^0.1.0",
     "typescript": "5.9.3"
   }
 }

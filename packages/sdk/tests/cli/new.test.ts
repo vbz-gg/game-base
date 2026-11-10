@@ -1,5 +1,5 @@
 /**
- * `game-base new`, which is how an author starts.
+ * `vbz new`, which is how an author starts.
  *
  * What matters is that the copy is a game rather than a template with
  * somebody else's name on it: the id a board will be kept under is settled at
@@ -33,13 +33,13 @@ import {
   versionsFor,
 } from "../../src/cli/new.js"
 
-const VERSIONS = { gameBase: "^9.9.9", engine: ">=9.0.0 <10.0.0" }
+const VERSIONS = { sdk: "^9.9.9", engine: ">=9.0.0 <10.0.0" }
 
 async function into(
   name: string,
   run: (dir: string) => Promise<void>,
 ): Promise<void> {
-  const parent = await mkdtemp(join(tmpdir(), "game-base-new-"))
+  const parent = await mkdtemp(join(tmpdir(), "sdk-new-"))
   try {
     await run(join(parent, name))
   } finally {
@@ -106,7 +106,7 @@ describe("what a copy is", () => {
         await readFile(join(dir, "package.json"), "utf8"),
       ) as { name: string; devDependencies: Record<string, string> }
       expect(pkg.name).toBe("probe")
-      expect(pkg.devDependencies["@vbz-gg/game-base"]).toBe(VERSIONS.gameBase)
+      expect(pkg.devDependencies["@vbz-gg/sdk"]).toBe(VERSIONS.sdk)
       expect(pkg.devDependencies["@clockwork2/engine"]).toBe(VERSIONS.engine)
     })
   }, 30_000)
@@ -117,7 +117,7 @@ describe("what a copy is", () => {
    * built.
    */
   test("a build left in the template is not copied", async () => {
-    const source = await mkdtemp(join(tmpdir(), "game-base-template-"))
+    const source = await mkdtemp(join(tmpdir(), "sdk-template-"))
     try {
       await mkdir(join(source, "dist"), { recursive: true })
       await writeFile(join(source, "dist", "sim.js"), "// somebody else's\n")
@@ -138,18 +138,18 @@ describe("what a copy is", () => {
    *
    * The filter tested the absolute source path for `/node_modules`, so every
    * file of a package installed under `node_modules` was rejected and
-   * `game-base new` made an empty directory. It passed here and against a
+   * `vbz new` made an empty directory. It passed here and against a
    * hand-unpacked tarball, because neither of those paths has `node_modules`
    * in it, and a hand-unpacked tarball is the one layout an author never has.
    */
   test("a template under node_modules is still copied", async () => {
-    const parent = await mkdtemp(join(tmpdir(), "game-base-installed-"))
+    const parent = await mkdtemp(join(tmpdir(), "sdk-installed-"))
     try {
       const source = join(
         parent,
         "node_modules",
         "@vbz-gg",
-        "game-base",
+        "sdk",
         "templates",
         "game",
       )
@@ -276,17 +276,17 @@ describe("what a copy leaves behind", () => {
 describe("the versions a new game asks for", () => {
   test("they are this package's own", async () => {
     const versions = await versionsFor()
-    expect(versions.gameBase).toMatch(/^\^\d+\.\d+\.\d+/)
+    expect(versions.sdk).toMatch(/^\^\d+\.\d+\.\d+/)
     expect(versions.engine).toContain("0.")
   })
 
   test("a manifest with neither still produces something installable", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "game-base-versions-"))
+    const dir = await mkdtemp(join(tmpdir(), "sdk-versions-"))
     try {
       const path = join(dir, "package.json")
       await writeFile(path, "{}")
       expect(await versionsFor(path)).toEqual({
-        gameBase: "^0.1.0",
+        sdk: "^0.1.0",
         engine: "*",
       })
     } finally {
@@ -298,7 +298,7 @@ describe("the versions a new game asks for", () => {
 describe("where the template lives", () => {
   /**
    * The path is built off `import.meta.dir`, and it has to land in the same
-   * place from `src/cli` and from `dist/cli`, or `game-base new` works here
+   * place from `src/cli` and from `dist/cli`, or `vbz new` works here
    * and nowhere else.
    */
   test("it is inside the package, at one relative path", async () => {

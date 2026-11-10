@@ -49,7 +49,7 @@ export const IGNORE_IN_GAME = ".gitignore"
  * The first spelling of this tested the absolute source path for `/dist` and
  * `/node_modules`, which is a filter that works from a source tree and
  * rejects every file from an installed one: a package installed under
- * `node_modules` has that in the path of everything it owns. `game-base new`
+ * `node_modules` has that in the path of everything it owns. `vbz new`
  * then made an empty directory and failed reading the package.json it had not
  * copied. It shipped in 0.1.0 because the tarball was unpacked by hand rather
  * than installed, and a hand-unpacked tarball is the one layout where the bug
@@ -100,19 +100,19 @@ export function renamed(text: string, id: string, title: string): string {
 /**
  * The versions a new game asks for.
  *
- * `@vbz-gg/game-base` is pinned to the copy that made it, and the engine to
+ * `@vbz-gg/sdk` is pinned to the copy that made it, and the engine to
  * the range that copy declares as its peer - so a new game installs one engine
  * and it is one this SDK was built against.
  */
 export async function versionsFor(
   manifestPath = OWN_MANIFEST,
-): Promise<{ gameBase: string; engine: string }> {
+): Promise<{ sdk: string; engine: string }> {
   const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as {
     version?: string
     peerDependencies?: Record<string, string>
   }
   return {
-    gameBase: `^${manifest.version ?? "0.1.0"}`,
+    sdk: `^${manifest.version ?? "0.1.0"}`,
     engine: manifest.peerDependencies?.["@clockwork2/engine"] ?? "*",
   }
 }
@@ -120,7 +120,7 @@ export async function versionsFor(
 export interface NewGameOptions {
   readonly dir: string
   readonly template?: string
-  readonly versions?: { readonly gameBase: string; readonly engine: string }
+  readonly versions?: { readonly sdk: string; readonly engine: string }
 }
 
 export interface NewGame {
@@ -178,7 +178,7 @@ export async function createGame(options: NewGameOptions): Promise<NewGame> {
   manifest.devDependencies = {
     ...manifest.devDependencies,
     "@clockwork2/engine": versions.engine,
-    "@vbz-gg/game-base": versions.gameBase,
+    "@vbz-gg/sdk": versions.sdk,
   }
   await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`)
 

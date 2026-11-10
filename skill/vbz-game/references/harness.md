@@ -1,6 +1,6 @@
 # The harness
 
-`game-base dev ./my-game` is the arcade's play view on a laptop. It builds the
+`vbz dev ./my-game` is the arcade's play view on a laptop. It builds the
 two real artifacts, serves them behind the real frame document with the real
 sandbox and CSP on one port, and serves the page that frames them on another.
 

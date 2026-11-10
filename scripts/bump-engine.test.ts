@@ -52,8 +52,8 @@ describe("the range a game must satisfy", () => {
 
 describe("bumping a tree", () => {
   async function tree(): Promise<string> {
-    const dir = await mkdtemp(join(tmpdir(), "game-base-bump-"))
-    await mkdir(join(dir, "packages/game-base/templates/game/src/sim"), {
+    const dir = await mkdtemp(join(tmpdir(), "sdk-bump-"))
+    await mkdir(join(dir, "packages/sdk/templates/game/src/sim"), {
       recursive: true,
     })
     await mkdir(join(dir, "fixtures/paddle/src/sim"), { recursive: true })
@@ -64,18 +64,18 @@ describe("bumping a tree", () => {
       JSON.stringify({ devDependencies: { [ENGINE]: "0.7.1", biome: "1" } }),
     )
     await writeFile(
-      join(dir, "packages/game-base/package.json"),
+      join(dir, "packages/sdk/package.json"),
       JSON.stringify({
-        name: "@vbz-gg/game-base",
+        name: "@vbz-gg/sdk",
         peerDependencies: { [ENGINE]: ">=0.7.1 <0.8.0" },
       }),
     )
     await writeFile(
-      join(dir, "packages/game-base/templates/game/package.json"),
+      join(dir, "packages/sdk/templates/game/package.json"),
       JSON.stringify({ devDependencies: { [ENGINE]: "0.7.1" } }),
     )
     for (const manifest of [
-      "packages/game-base/templates/game/src/sim/manifest.ts",
+      "packages/sdk/templates/game/src/sim/manifest.ts",
       "fixtures/paddle/src/sim/manifest.ts",
     ]) {
       await writeFile(
@@ -120,7 +120,7 @@ describe("bumping a tree", () => {
         await readFile(join(dir, "package.json"), "utf8"),
       ) as { devDependencies: Record<string, string> }
       const pkg = JSON.parse(
-        await readFile(join(dir, "packages/game-base/package.json"), "utf8"),
+        await readFile(join(dir, "packages/sdk/package.json"), "utf8"),
       ) as { peerDependencies: Record<string, string> }
 
       expect(root.devDependencies[ENGINE]).toBe("0.8.0")
@@ -194,9 +194,9 @@ describe("the real repository", () => {
   test("nothing else holds the version in a way a bump must follow", async () => {
     const rewritten = new Set([
       "package.json",
-      "packages/game-base/package.json",
-      "packages/game-base/templates/game/package.json",
-      "packages/game-base/templates/game/src/sim/manifest.ts",
+      "packages/sdk/package.json",
+      "packages/sdk/templates/game/package.json",
+      "packages/sdk/templates/game/src/sim/manifest.ts",
       "fixtures/paddle/src/sim/manifest.ts",
       "docs/sdk.md",
     ])

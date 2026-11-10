@@ -73,7 +73,7 @@ own origin, so the stored bytes carry no domain and the bundle host can change
 without re-publishing anything. It is also why the frame document and the
 artifacts are served from one origin.
 
-## What `game-base build` writes
+## What `vbz build` writes
 
 ```
 dist/sim.js        the simulation

@@ -26,7 +26,7 @@ const ROOT = join(import.meta.dir, "..", "..", "..", "..")
 const SUBJECTS = [
   {
     name: "the scheme template",
-    dir: join(ROOT, "packages", "game-base", "templates", "game"),
+    dir: join(ROOT, "packages", "sdk", "templates", "game"),
   },
   { name: "the paddle fixture", dir: join(ROOT, "fixtures", "paddle") },
 ] as const
@@ -42,7 +42,7 @@ async function report(dir: string) {
   // The suite wants a directory laid out as `index.js` with `manifest.json`
   // beside it. Pointed at a file it throws from `budgets`, which walks the
   // subject's root.
-  const subject = await mkdtemp(join(tmpdir(), "game-base-conformance-"))
+  const subject = await mkdtemp(join(tmpdir(), "sdk-conformance-"))
   try {
     await writeFile(join(subject, "index.js"), sim)
     await writeFile(

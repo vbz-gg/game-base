@@ -18,17 +18,17 @@
       },
     },
     "e2e": {
-      "name": "@vbz-gg/game-base-e2e",
+      "name": "@vbz-gg/sdk-e2e",
       "version": "0.0.0",
       "devDependencies": {
         "@playwright/test": "1.56.1",
       },
     },
-    "packages/game-base": {
-      "name": "@vbz-gg/game-base",
+    "packages/sdk": {
+      "name": "@vbz-gg/sdk",
       "version": "0.2.0",
       "bin": {
-        "game-base": "./dist/cli/index.js",
+        "vbz": "./dist/cli/index.js",
       },
       "peerDependencies": {
         "@clockwork2/engine": ">=0.8.0 <0.9.0",
@@ -116,9 +116,9 @@
 
     "@types/ws": ["@types/ws@8.18.1", "", { "dependencies": { "@types/node": "*" } }, "sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg=="],
 
-    "@vbz-gg/game-base": ["@vbz-gg/game-base@workspace:packages/game-base"],
+    "@vbz-gg/sdk": ["@vbz-gg/sdk@workspace:packages/sdk"],
 
-    "@vbz-gg/game-base-e2e": ["@vbz-gg/game-base-e2e@workspace:e2e"],
+    "@vbz-gg/sdk-e2e": ["@vbz-gg/sdk-e2e@workspace:e2e"],
 
     "JSONStream": ["JSONStream@1.3.5", "", { "dependencies": { "jsonparse": "^1.2.0", "through": ">=2.2.7 <3" }, "bin": { "JSONStream": "./bin.js" } }, "sha512-E+iruNOY8VV9s4JEbe1aNEm6MiszPRr/UfcHMz0TQh1BXSxHK+ASV1R6W4HpjBhSeS+54PIsAMCBmwD06LLsqQ=="],
 
