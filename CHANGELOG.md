@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.0](https://github.com/vbz-gg/sdk/compare/v0.3.0...v0.4.0) (2026-11-11)
+
+
+### Features
+
+* **cli:** vbz publish uploads a build and waits for the verdict ([#18](https://github.com/vbz-gg/sdk/issues/18)) ([ff5ea0b](https://github.com/vbz-gg/sdk/commit/ff5ea0bca87f09efdd76ee5b471c996e12706aa8))
+* **platform:** a game page's client, as @vbz-gg/sdk/platform ([#17](https://github.com/vbz-gg/sdk/issues/17)) ([f79ef4c](https://github.com/vbz-gg/sdk/commit/f79ef4c735477fa3bba8851376b5478dcbb68ba3))
+
+
+### Bug Fixes
+
+* **package:** write the vbz command's path the way npm publishes it ([#16](https://github.com/vbz-gg/sdk/issues/16)) ([14cb522](https://github.com/vbz-gg/sdk/commit/14cb522434a3d9cc7539a54f5e6369b09ae8cb67))
+
 ## [0.3.0](https://github.com/vbz-gg/sdk/compare/v0.2.0...v0.3.0) (2026-11-11)
 
 
