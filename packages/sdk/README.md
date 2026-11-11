@@ -96,6 +96,44 @@ type Board = PlatformRoutes["GET /v1/board"]["response"]
 A refusal arrives as `{ error, message }`, where `error` is one of
 `PublicRefusalCode`. Switch on the code, never on the status.
 
+## Talking to the platform from your page
+
+`@vbz-gg/sdk/platform` is your page's client for vbz.gg: it signs a player
+in, starts a run, sends the run as it goes, submits it, and reads the board.
+
+```ts
+import { createGameFrame } from "@clockwork2/engine/parent"
+import { createPlatformClient, Run } from "@vbz-gg/sdk/platform"
+
+const platform = createPlatformClient({
+  apiOrigin: API_ORIGIN, // from vbz.gg
+  signInOrigin: SIGN_IN_ORIGIN, // from vbz.gg
+  pageKey: PAGE_KEY, // vbz_pk_..., from the dashboard
+})
+
+// From the click itself: the browser opens the sign-in window only there.
+signInButton.onclick = () => platform.signIn()
+
+playButton.onclick = async () => {
+  const run = await platform.startRun()
+  const driver = new Run({
+    client: platform,
+    run,
+    mount: (handlers) =>
+      createGameFrame({ container: stage, src: run.game.frameUrl, ...handlers }),
+    onState: (state) => render(state), // ends at "done", with the replay's result
+  })
+}
+
+const board = await platform.board({ period: "week" })
+```
+
+The player's token is kept in `localStorage` and renewed at every run start.
+A failure is a `PlatformRefusal`, carrying the platform's code, or a
+`PlatformClientError`, carrying the client's, such as `E_POPUP_BLOCKED`.
+Switch on `code`. The platform's page guide has every route, and the
+`page.md` reference in the skill has every client code.
+
 ## Using the renderer yourself
 
 If you are building a host rather than a game:

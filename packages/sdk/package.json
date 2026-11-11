@@ -23,25 +23,30 @@
       "types": "./dist/api/index.d.ts",
       "default": "./dist/api/index.js"
     },
-    "./controls": {
-      "development": "./src/controls/index.ts",
-      "types": "./dist/controls/index.d.ts",
-      "default": "./dist/controls/index.js"
-    },
     "./build": {
       "development": "./src/build/index.ts",
       "types": "./dist/build/index.d.ts",
       "default": "./dist/build/index.js"
     },
-    "./serve": {
-      "development": "./src/serve/index.ts",
-      "types": "./dist/serve/index.d.ts",
-      "default": "./dist/serve/index.js"
+    "./controls": {
+      "development": "./src/controls/index.ts",
+      "types": "./dist/controls/index.d.ts",
+      "default": "./dist/controls/index.js"
     },
     "./harness": {
       "development": "./src/harness/index.ts",
       "types": "./dist/harness/index.d.ts",
       "default": "./dist/harness/index.js"
+    },
+    "./platform": {
+      "development": "./src/platform/index.ts",
+      "types": "./dist/platform/index.d.ts",
+      "default": "./dist/platform/index.js"
+    },
+    "./serve": {
+      "development": "./src/serve/index.ts",
+      "types": "./dist/serve/index.d.ts",
+      "default": "./dist/serve/index.js"
     }
   },
   "peerDependencies": {
