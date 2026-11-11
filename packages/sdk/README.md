@@ -26,18 +26,33 @@ name and is immutable once published.
 `@clockwork2/engine` is a peer dependency, so your game installs one copy of
 the engine rather than two.
 
-## The three commands
+## The four commands
 
 ```bash
-vbz new   <dir>   copy a game that already conforms, and rename it
-vbz build <dir>   write dist/sim.js, dist/frame.js and dist/manifest.json
-vbz dev   <dir>   serve the game on two origins, the way production does
+vbz new     <dir>   copy a game that already conforms, and rename it
+vbz build   <dir>   write dist/sim.js, dist/frame.js and dist/manifest.json
+vbz dev     <dir>   serve the game on two origins, the way production does
+vbz publish <dir> --game <id>   upload dist/ and wait for the verdict
 ```
 
 `dev` is your game's page on your laptop: the game in a sandboxed frame
 on one origin, the page that frames it on another, and the pad your manifest
 asked for drawn over it. A scheme picker switches layouts without editing the
 manifest, and ending a run publishes its recording.
+
+`publish` is for your build system. It uploads `dist/` to the game you name,
+with one of your studio's secret keys from `VBZ_STUDIO_KEY`, then waits for
+the platform's checks:
+
+```bash
+VBZ_STUDIO_KEY=vbz_sk_... vbz publish . --game <game id>
+```
+
+It exits 0 only when the version went live. A rejection exits 1 and prints
+the code and the first check that failed. The platform is
+`https://studio.vbz.gg` unless `--api` or `VBZ_API_ORIGIN` names another.
+Don't add a script called `publish` to your `package.json`: npm runs a script
+with that name on its own, as part of `npm publish`.
 
 ## On-screen controls
 

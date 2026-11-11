@@ -15,6 +15,7 @@
 import { existsSync } from "node:fs"
 import { readFile } from "node:fs/promises"
 import { join } from "node:path"
+import { DIST_DIR, DIST_FILES } from "../build/dist.js"
 import type { GameSource } from "../build/index.js"
 import { type BuiltGame, buildAndAddress } from "./artifacts.js"
 import { harnessPage } from "./page/document.js"
@@ -115,7 +116,10 @@ export async function startHarness(options: HarnessOptions): Promise<Harness> {
  */
 async function readManifest(root: string): Promise<HarnessManifest> {
   try {
-    const text = await readFile(join(root, "dist", "manifest.json"), "utf8")
+    const text = await readFile(
+      join(root, DIST_DIR, DIST_FILES.manifest),
+      "utf8",
+    )
     return JSON.parse(text) as HarnessManifest
   } catch {
     return {}

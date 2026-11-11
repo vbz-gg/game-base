@@ -126,6 +126,22 @@ it, and npm 12 logs the rewrite as the command being removed while keeping
 it. The check holds each entry to the published form, and to a file the
 tarball carries.
 
+## The publish command
+
+**`vbz publish` reads the studio's secret key from `VBZ_STUDIO_KEY` only.**
+Never add a flag for it: a flag puts the key in shell history and the
+process list. The command sends no `Origin` header, and the platform
+refuses a secret key that arrives with one.
+
+**The upload is sent once; only the read-back retries.** A second upload of
+a version that did arrive is refused as `E_VERSION_EXISTS`.
+
+**Its exit code is the verdict.** 0 means the version is live and served.
+Anything else, including a version an operator took down, is 1.
+
+No template or example names a script `publish`, because npm runs one with
+that name as a lifecycle hook of `npm publish`.
+
 ## The skill
 
 `skill/vbz-game/` is prose an agent follows literally, so a stale sentence

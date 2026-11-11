@@ -20,6 +20,10 @@ export interface Options {
   readonly frameEntry: string
   readonly hostPort: number
   readonly framePort: number
+  /** `publish`: the game to upload to. */
+  readonly game: string | undefined
+  /** `publish`: the platform's origin, over the environment and the default. */
+  readonly api: string | undefined
 }
 
 export function parseArgs(argv: readonly string[]): Options {
@@ -41,5 +45,7 @@ export function parseArgs(argv: readonly string[]): Options {
     frameEntry: flags.get("frame") ?? DEFAULT_FRAME_ENTRY,
     hostPort: Number(flags.get("host") ?? DEFAULT_HOST_PORT),
     framePort: Number(flags.get("frame-port") ?? DEFAULT_FRAME_PORT),
+    game: flags.get("game"),
+    api: flags.get("api"),
   }
 }

@@ -35,7 +35,7 @@ So the SDK owns six things, one per subpath export:
 | `/serve` | The frame document, its CSP, and the routes the artifacts are fetched from |
 | `/harness` | Both of those, wired into a local two-origin play view |
 
-Beside them the package ships a CLI (`vbz new | build | dev`), the
+Beside them the package ships a CLI (`vbz new | build | dev | publish`), the
 template `new` copies, and `skill/vbz-game/`, which is the same material
 written for an agent to follow literally.
 
@@ -340,6 +340,35 @@ ranked run a seed of its own.
 What the harness does not do is replay, settle or rank. That is the
 platform's half, and a harness pretending to do it would be teaching an author
 about a server that does not exist.
+
+## Publishing a version
+
+`vbz publish ./my-game --game <id>` uploads the three files `vbz build`
+wrote, as one multipart `POST /v1/games/:gameId/versions`, and then reads
+the version back at `GET /v1/studios/:studioId/versions/:versionId` every
+two seconds until the platform's checks decide. The upload's answer names
+the studio, so the command needs only the game's id. It waits up to 15
+minutes, because the checks run the game in three engines, and a version
+still pending after that is reported as still being checked rather than as
+failed.
+
+It is built for a studio's build system, so its exit code is the verdict: 0
+only when the version went live. A rejection, a version an operator has
+taken down, a refusal and a platform that does not answer all exit 1 with a
+code that names which.
+
+The studio's secret key comes from `VBZ_STUDIO_KEY` and nowhere else. A flag
+would put it in shell history and in the process list. The request carries
+no `Origin` header, which is how the platform tells a build system from a
+browser: a secret key sent with one is refused. The platform's origin is
+`--api`, else `VBZ_API_ORIGIN`, else `https://studio.vbz.gg`, and it has to
+be https, or http to the same machine, because the key travels with the
+request.
+
+The upload is sent once. A retry of an upload that did arrive is refused as
+`E_VERSION_EXISTS`, so a slow answer would turn into a confusing one.
+Reading the version back is safe to repeat, and a read the platform fails
+to answer is tried again until the wait runs out.
 
 ## The package
 
