@@ -176,3 +176,7 @@ about determinism:
 - `vbz new <dir>` - a game that already conforms.
 - `vbz build <dir>` - the three files a submission carries.
 - `vbz dev <dir>` - your game's page, locally, on two origins.
+- `vbz publish <dir> --game <id>` - upload `dist/` and wait for the
+  platform's verdict. The studio's secret key comes from `VBZ_STUDIO_KEY`,
+  never a flag. It exits 0 only when the version went live, and prints the
+  first failed check when it did not.

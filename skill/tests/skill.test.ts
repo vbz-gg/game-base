@@ -134,7 +134,7 @@ describe("what the skill tells an author to run", () => {
       "utf8",
     )
     const text = await read("SKILL.md")
-    for (const command of ["new", "build", "dev"]) {
+    for (const command of ["new", "build", "dev", "publish"]) {
       expect(text).toContain(`vbz ${command}`)
       expect(cli).toContain(`case "${command}"`)
     }

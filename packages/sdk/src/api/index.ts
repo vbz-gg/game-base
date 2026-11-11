@@ -168,6 +168,12 @@ export interface PageGame {
 /** `POST /v1/games/:gameId/versions`: an upload, accepted for checking. */
 export interface UploadedVersion {
   readonly gameVersionId: string
+  /**
+   * The studio that owns the game, so a build system can read the version
+   * back at `GET /v1/studios/:studioId/versions/:versionId` knowing only the
+   * game it uploaded to.
+   */
+  readonly studioId: string
   readonly version: string
   /** Always pending here: the checks decide, after the upload is answered. */
   readonly state: VersionState

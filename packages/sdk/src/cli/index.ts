@@ -12,6 +12,7 @@
 
 import { mkdir, rm, writeFile } from "node:fs/promises"
 import { join } from "node:path"
+import { DIST_DIR, DIST_FILES } from "../build/dist.js"
 import { buildGameArtifacts, type GameSource } from "../build/index.js"
 import {
   DEFAULT_FRAME_PORT,
@@ -21,17 +22,32 @@ import {
 import { type Options, parseArgs } from "./args.js"
 import { readManifestFromSim } from "./manifest.js"
 import { createGame } from "./new.js"
+import {
+  API_ORIGIN_VARIABLE,
+  DEFAULT_API_ORIGIN,
+  publish,
+  publishSettings,
+  STUDIO_KEY_VARIABLE,
+  verdictOf,
+} from "./publish.js"
 
 const USAGE = `vbz - build and run a game for vbz.gg
 
-  vbz new   [dir]    copy a game that already conforms, and rename it
-  vbz build [dir]    write dist/sim.js, dist/frame.js and dist/manifest.json
-  vbz dev   [dir]    serve the game the way production does
+  vbz new     [dir]   copy a game that already conforms, and rename it
+  vbz build   [dir]   write dist/sim.js, dist/frame.js and dist/manifest.json
+  vbz dev     [dir]   serve the game the way production does
+  vbz publish [dir]   upload dist/ and wait for the platform's verdict
 
   --sim <path>     the simulation's entry   (default src/sim/index.ts)
   --frame <path>   the frame's entry        (default src/frame.ts)
   --host <port>    the page that frames it  (default ${DEFAULT_HOST_PORT})
   --frame-port <p> the game's own origin    (default ${DEFAULT_FRAME_PORT})
+  --game <id>      publish: the game to upload to
+  --api <origin>   publish: the platform    (default ${DEFAULT_API_ORIGIN},
+                   or ${API_ORIGIN_VARIABLE})
+
+  publish reads the studio's secret key from ${STUDIO_KEY_VARIABLE}, and exits 0
+  only when the version went live.
 `
 
 function sourceOf(options: Options): GameSource {
@@ -53,13 +69,13 @@ function sourceOf(options: Options): GameSource {
 async function build(options: Options): Promise<void> {
   const { sim, frame } = await buildGameArtifacts(sourceOf(options))
   const manifest = await readManifestFromSim(sim)
-  const dist = join(options.dir, "dist")
+  const dist = join(options.dir, DIST_DIR)
   await rm(dist, { recursive: true, force: true })
   await mkdir(dist, { recursive: true })
-  await writeFile(join(dist, "sim.js"), sim)
-  await writeFile(join(dist, "frame.js"), frame)
+  await writeFile(join(dist, DIST_FILES.sim), sim)
+  await writeFile(join(dist, DIST_FILES.frame), frame)
   await writeFile(
-    join(dist, "manifest.json"),
+    join(dist, DIST_FILES.manifest),
     `${JSON.stringify(manifest, null, 2)}\n`,
   )
   process.stdout.write(
@@ -105,6 +121,21 @@ export async function main(argv: readonly string[]): Promise<number> {
       // Resolves only when the process is killed: the servers are the point.
       await new Promise(() => {})
       return 0
+    case "publish": {
+      const settings = publishSettings(
+        { dir: options.dir, game: options.game, api: options.api },
+        process.env,
+      )
+      const status = await publish(settings, {
+        fetch: (url, init) => fetch(url, init),
+        sleep: (ms) => Bun.sleep(ms),
+        now: () => Date.now(),
+        log: (line) => process.stdout.write(`${line}\n`),
+      })
+      const verdict = verdictOf(status)
+      for (const line of verdict.lines) process.stdout.write(`${line}\n`)
+      return verdict.exitCode
+    }
     default:
       process.stdout.write(USAGE)
       return options.command === "" ? 0 : 1

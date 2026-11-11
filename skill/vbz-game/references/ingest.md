@@ -3,6 +3,10 @@
 What the platform does with a submission, in order. Everything before the
 first storage write, so a refused submission leaves nothing behind.
 
+`vbz publish <dir> --game <id>` is how a submission arrives. It sends
+`dist/`, then reads the version back until the checks below decide, and
+prints the code and the first failed check of a rejection.
+
 ## 1. The manifest
 
 `assertManifest` on the shape, and then two things it does not cover:
