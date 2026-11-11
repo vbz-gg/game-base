@@ -84,8 +84,14 @@ report the close first.
 **The player's token** is kept in `localStorage`, one entry per page key,
 because a token is good only beside a page key of its own studio. Every run
 start renews it, and the renewed one is kept. A token the platform answers
-with `E_SIGN_IN_REQUIRED` is dropped. A store that throws keeps nothing, and
-the player signs in again.
+with `E_SIGN_IN_REQUIRED` is dropped, but only while it is still the kept one:
+an older run's token refused after the player signed in again says nothing
+about the new one. The page also holds the player in memory and reads that
+copy once it has one, so a browser that keeps nothing (a private window, a
+blocked or full store) still plays this visit, and signs in again on the next.
+
+A run's own writes and its result are sent with the token from its own start,
+not with whatever player is kept by then.
 
 **`Run`** drives one run through a frame the page makes with
 `createGameFrame`. It checks the frame's manifest hash against the run's

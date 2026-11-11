@@ -59,7 +59,8 @@ holds the subpath to exporting no value, because a studio's page bundles it.
 
 **Every request goes through `request`**, which is keyed by `PlatformRoutes`.
 A URL built by hand is a route the compiler cannot check, and a secret key's
-route is not offered to a page at all.
+route is not offered to a page at all. Which credential a route carries comes
+from `ROUTE_AUTH`, held to each route's `auth` at compile time.
 
 **Nothing reads the browser when the module loads.** The browser arrives
 through `PageEnvironment` when a client is made, so a page may import the

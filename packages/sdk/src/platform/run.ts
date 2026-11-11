@@ -178,6 +178,9 @@ export class Run {
    * and the replay would not agree.
    */
   private ready(manifestHash: string): void {
+    // A second `ready` (a reloaded frame document, another hello) would
+    // start the game again in the middle of the run.
+    if (this.state.phase !== RUN_PHASE.WAITING) return
     const { run } = this.options
     if (manifestHash !== run.game.manifestHash) {
       this.fail("E_WRONG_GAME", `the frame reports ${manifestHash}`)
@@ -272,18 +275,25 @@ export class Run {
     let delay = this.options.retryDelayMs ?? SUBMIT_RETRY_MS
     for (let attempt = 1; ; attempt += 1) {
       if (this.abort.signal.aborted) return
-      // A chunk that got no answer has to arrive before the recording.
+      let failure: unknown
+      // A chunk that got no answer has to arrive before the recording: one
+      // still unsent is this attempt's failure, and nothing is submitted.
       if (this.unsent.length > 0) await this.send()
-      try {
-        await this.options.client.submit(this.options.run, recording)
-        break
-      } catch (error) {
-        if (!worthRetrying(error) || attempt >= attempts) {
-          this.failWith(error)
-          return
+      if (this.unsent.length > 0) {
+        failure = new PlatformClientError("E_UNREACHABLE")
+      } else {
+        try {
+          await this.options.client.submit(this.options.run, recording)
+          break
+        } catch (error) {
+          failure = error
         }
       }
-      await wait(delay)
+      if (!worthRetrying(failure) || attempt >= attempts) {
+        this.failWith(failure)
+        return
+      }
+      await this.wait(delay)
       delay *= 2
     }
 
@@ -291,13 +301,29 @@ export class Run {
     try {
       const result = await this.options.client.awaitResult(
         this.options.run.sessionId,
-        { signal: this.abort.signal },
+        // The run's own token: the page may have signed out, or somebody
+        // else in, since the run started.
+        { signal: this.abort.signal, token: this.options.run.token },
       )
       this.settle(result)
     } catch (error) {
       if (this.abort.signal.aborted) return
       this.failWith(error)
     }
+  }
+
+  /** The pause before a resend, cut short when the run is stopped. */
+  private wait(ms: number): Promise<void> {
+    const signal = this.abort.signal
+    return new Promise((resolve) => {
+      const done = () => {
+        clearTimeout(timer)
+        signal.removeEventListener("abort", done)
+        resolve()
+      }
+      const timer = setTimeout(done, ms)
+      signal.addEventListener("abort", done, { once: true })
+    })
   }
 
   /** From a host-drawn control, and from nowhere else. */
@@ -334,6 +360,12 @@ export class Run {
     this.options.onState?.(this.state)
   }
 
+  /**
+   * Final: nothing is sent after a failure and the state never leaves it,
+   * so a page shown a failure is never shown a result after it. The frame
+   * stays, for the page to take down, because it may be showing the end of
+   * the run.
+   */
   private fail(code: ClientErrorCode | string, detail: string | null): void {
     if (this.abort.signal.aborted) return
     this.state = {
@@ -342,6 +374,7 @@ export class Run {
       detail,
       result: null,
     }
+    this.abort.abort()
     this.options.onState?.(this.state)
   }
 
@@ -365,8 +398,4 @@ export class Run {
 function tickOf(input: unknown): number {
   const tick = (input as { readonly tick?: unknown } | null)?.tick
   return typeof tick === "number" ? tick : 0
-}
-
-function wait(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
 }

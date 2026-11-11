@@ -266,6 +266,47 @@ describe("runs", () => {
     expect(told).toBe(1)
   })
 
+  test("an older run's token refused leaves a newer sign-in alone", async () => {
+    let told = 0
+    const made = client(new FakePage(), () => {
+      told += 1
+    })
+    made.page.answers.push({
+      status: 200,
+      body: { token: "t-1", expiresIn: 7_776_000, player: PLAYER },
+    })
+    const signing = made.client.signIn()
+    await settle()
+    made.page.post({
+      origin: SIGN_IN,
+      source: made.page.popup,
+      data: {
+        type: "vbz.signin",
+        code: "c",
+        state: authorizeQuery(made.page).get("state"),
+      },
+    })
+    await signing
+    const run = { sessionId: "s-old", token: "t-old" } as Parameters<
+      typeof made.client.sendChunk
+    >[0]
+    made.page.answers.push({
+      status: 401,
+      body: { error: "E_SIGN_IN_REQUIRED", message: "sign in" },
+    })
+    const error = (await caught(() =>
+      made.client.sendChunk(run, {
+        seq: 3,
+        throughTick: 9,
+        checkpoints: [],
+        inputs: [],
+      }),
+    )) as PlatformRefusal
+    expect(error.code).toBe("E_SIGN_IN_REQUIRED")
+    expect(made.client.player()).toEqual(PLAYER)
+    expect(told).toBe(0)
+  })
+
   test("another refusal leaves the player signed in", async () => {
     const { page, client: platform } = await signedIn()
     page.answers.push({
@@ -371,6 +412,16 @@ describe("waiting for a result", () => {
         ),
       ),
     ).toContain("left the page")
+  })
+
+  test("asks with the run's own token when given one", async () => {
+    const { page, client: platform } = await signedIn()
+    platform.signOut()
+    page.answers.push({ status: 200, body: done })
+    expect(await platform.awaitResult("s-1", { token: "t-run" })).toEqual(
+      done as never,
+    )
+    expect(page.sent.at(-1)?.headers.authorization).toBe("Bearer t-run")
   })
 
   test("with nobody signed in, there is no result to ask for", async () => {

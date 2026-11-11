@@ -93,8 +93,12 @@ export class PlatformClientError extends Error {
  * platform's answer to that body, and sending it again gets the same answer.
  */
 export function worthRetrying(error: unknown): boolean {
-  if (error instanceof PlatformClientError)
-    return error.code === "E_UNREACHABLE"
   if (error instanceof PlatformRefusal) return error.status >= 500
-  return false
+  if (!(error instanceof PlatformClientError)) return false
+  // A proxy's own 502, 503 or 504 page is not JSON, and the platform behind
+  // it may never have seen the request.
+  return (
+    error.code === "E_UNREACHABLE" ||
+    (error.code === "E_ANSWER_UNREADABLE" && (error.status ?? 0) >= 500)
+  )
 }

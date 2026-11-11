@@ -4,8 +4,9 @@
 
 import { describe, expect, test } from "bun:test"
 import {
-  type PlatformClientError,
+  PlatformClientError,
   PlatformRefusal,
+  worthRetrying,
 } from "../../src/platform/errors"
 import { createRequester } from "../../src/platform/request"
 import { FakePage } from "./fake-page"
@@ -142,5 +143,40 @@ describe("what comes back", () => {
       request("GET /v1/runs/:id", { params: {} as { id: string } }),
     )
     expect(String(error)).toContain("needs the path parameter id")
+  })
+})
+
+describe("what is worth sending again", () => {
+  test("no answer, the platform's own failure, and a proxy's failure page", () => {
+    expect(worthRetrying(new PlatformClientError("E_UNREACHABLE"))).toBe(true)
+    expect(
+      worthRetrying(
+        new PlatformRefusal(500, { error: "E_INTERNAL", message: "x" }),
+      ),
+    ).toBe(true)
+    // A load balancer's 503 page during a deploy is not JSON.
+    expect(
+      worthRetrying(
+        new PlatformClientError("E_ANSWER_UNREADABLE", { status: 503 }),
+      ),
+    ).toBe(true)
+  })
+
+  test("not a refusal, an unreadable success, or anything else", () => {
+    expect(
+      worthRetrying(
+        new PlatformRefusal(409, { error: "E_CHUNK_CONFLICT", message: "x" }),
+      ),
+    ).toBe(false)
+    expect(
+      worthRetrying(
+        new PlatformClientError("E_ANSWER_UNREADABLE", { status: 200 }),
+      ),
+    ).toBe(false)
+    expect(worthRetrying(new PlatformClientError("E_ANSWER_UNREADABLE"))).toBe(
+      false,
+    )
+    expect(worthRetrying(new PlatformClientError("E_WRONG_GAME"))).toBe(false)
+    expect(worthRetrying(new TypeError("a bug"))).toBe(false)
   })
 })

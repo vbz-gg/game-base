@@ -68,6 +68,24 @@ export interface RequesterOptions {
 
 const PAGE_KEY_HEADER: PageKeyHeader = "x-vbz-key"
 
+/**
+ * Each page route's credential, as `PlatformRoutes` declares it. A route the
+ * table gains has to be named here with the same `auth`, or this fails to
+ * compile, so whether a request carries the page key is the table's to say.
+ */
+const ROUTE_AUTH = {
+  "GET /v1/game": "page-key",
+  "POST /v1/oauth/token": "public",
+  "POST /v1/runs": "player",
+  "POST /v1/runs/:id/chunks": "player",
+  "POST /v1/runs/:id/submit": "player",
+  "GET /v1/runs/:id/result": "player",
+  "GET /v1/runs/:id": "page-key",
+  "GET /v1/board": "page-key",
+} as const satisfies {
+  readonly [Route in PageRoute]: PlatformRoutes[Route]["auth"]
+}
+
 export function createRequester(options: RequesterOptions): Requester {
   return async (route, request) => {
     const space = route.indexOf(" ")
@@ -88,8 +106,9 @@ export function createRequester(options: RequesterOptions): Requester {
     }
 
     const headers: Record<string, string> = {}
-    // The code trade reads the page key from its body, as `clientId`.
-    if (route !== "POST /v1/oauth/token") {
+    // A public route takes no key header: the code trade reads the page key
+    // from its body, as `clientId`.
+    if (ROUTE_AUTH[route] !== "public") {
       headers[PAGE_KEY_HEADER] = options.pageKey
     }
     if (request.token !== undefined) {

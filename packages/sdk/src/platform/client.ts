@@ -57,6 +57,11 @@ export interface ResultOptions {
   readonly signal?: AbortSignal
   /** How long to wait between asks. */
   readonly intervalMs?: number
+  /**
+   * The token to ask with: a run's own, from its start. The kept player's by
+   * default, which may since have signed out or been replaced.
+   */
+  readonly token?: string
 }
 
 /** How long `awaitResult` waits between asks by default. */
@@ -78,7 +83,10 @@ export interface PlatformClient {
   sendChunk(run: StartedRun, chunk: RunChunk): Promise<ChunkAccepted>
   submit(run: StartedRun, recording: unknown): Promise<SubmittedRun>
   /** The player's own run and what its replay decided, now. */
-  result(sessionId: string): Promise<RunResult>
+  result(
+    sessionId: string,
+    options?: Pick<ResultOptions, "token">,
+  ): Promise<RunResult>
   /** Asks until the run's result is final. */
   awaitResult(sessionId: string, options?: ResultOptions): Promise<RunResult>
   board(options?: BoardOptions): Promise<Board>
@@ -124,20 +132,28 @@ export function createPlatformClient(
       player,
     })
 
-  const tokenOrThrow = (): string => {
+  const keptOrThrow = () => {
     const kept = store.read()
     if (kept === null) throw new PlatformClientError("E_NOT_SIGNED_IN")
-    return kept.token
+    return kept
   }
 
-  /** A player route: a token that stopped working forgets the player. */
-  const asPlayer = async <T>(call: () => Promise<T>): Promise<T> => {
+  /**
+   * A player route. A token the platform stopped honouring forgets the
+   * player, but only while it is still the kept one: an older run's token
+   * refused after the player signed in again says nothing about the new one.
+   */
+  const asPlayer = async <T>(
+    token: string,
+    call: (token: string) => Promise<T>,
+  ): Promise<T> => {
     try {
-      return await call()
+      return await call(token)
     } catch (error) {
       if (
         error instanceof PlatformRefusal &&
-        error.code === "E_SIGN_IN_REQUIRED"
+        error.code === "E_SIGN_IN_REQUIRED" &&
+        store.read()?.token === token
       ) {
         store.clear()
         options.onSignedOut?.()
@@ -146,11 +162,14 @@ export function createPlatformClient(
     }
   }
 
-  const result = (sessionId: string) =>
-    asPlayer(() =>
+  const result = (
+    sessionId: string,
+    resultOptions: Pick<ResultOptions, "token"> = {},
+  ) =>
+    asPlayer(resultOptions.token ?? keptOrThrow().token, (token) =>
       request("GET /v1/runs/:id/result", {
         params: { id: sessionId },
-        token: tokenOrThrow(),
+        token,
       }),
     )
 
@@ -181,10 +200,9 @@ export function createPlatformClient(
     signOut: () => store.clear(),
 
     async startRun(body = {}) {
-      const kept = store.read()
-      if (kept === null) throw new PlatformClientError("E_NOT_SIGNED_IN")
-      const started = await asPlayer(() =>
-        request("POST /v1/runs", { body, token: kept.token }),
+      const kept = keptOrThrow()
+      const started = await asPlayer(kept.token, (token) =>
+        request("POST /v1/runs", { body, token }),
       )
       // Every start renews the token; the renewed one is the one to keep.
       keep(started.token, started.expiresIn, kept.player)
@@ -192,20 +210,20 @@ export function createPlatformClient(
     },
 
     sendChunk: (run, chunk) =>
-      asPlayer(() =>
+      asPlayer(run.token, (token) =>
         request("POST /v1/runs/:id/chunks", {
           params: { id: run.sessionId },
           body: chunk,
-          token: run.token,
+          token,
         }),
       ),
 
     submit: (run, recording) =>
-      asPlayer(() =>
+      asPlayer(run.token, (token) =>
         request("POST /v1/runs/:id/submit", {
           params: { id: run.sessionId },
           body: { recording },
-          token: run.token,
+          token,
         }),
       ),
 
@@ -216,7 +234,10 @@ export function createPlatformClient(
       for (;;) {
         waitOptions.signal?.throwIfAborted()
         try {
-          const answer = await result(sessionId)
+          const answer = await result(
+            sessionId,
+            waitOptions.token === undefined ? {} : { token: waitOptions.token },
+          )
           if (isFinalResult(answer)) return answer
         } catch (error) {
           if (!worthRetrying(error)) throw error

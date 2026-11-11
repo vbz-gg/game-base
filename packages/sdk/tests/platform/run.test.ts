@@ -108,7 +108,8 @@ function fakeClient(script: {
         if (outcome !== "ok") throw failure(outcome)
         return { sessionId: run.sessionId, recordingSha256: "r" }
       },
-      async awaitResult(sessionId: string) {
+      async awaitResult(sessionId: string, options?: { token?: string }) {
+        expect(options?.token).toBe("t-run")
         order.push(`result ${sessionId}`)
         if (script.result instanceof Error) throw script.result
         return script.result ?? RESULT
@@ -354,6 +355,32 @@ describe("the end of the run", () => {
     ])
   })
 
+  test("a final chunk still unsent holds the recording back", async () => {
+    // Sent with the recording first, the platform would find the chunks short
+    // of the end and refuse the run for good.
+    const ready = start({ chunks: ["ok", "unreachable", "unreachable", "ok"] })
+    await playedThrough(ready)
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(ready.order).toEqual([
+      "chunk 0",
+      "chunk 1",
+      "chunk 1",
+      "chunk 1",
+      'submit {"v":1}',
+      "result s-1",
+    ])
+  })
+
+  test("a final chunk that never arrives fails the run, and nothing is submitted", async () => {
+    const ready = start({
+      chunks: ["ok", ...Array<Outcome>(6).fill("unreachable")],
+    })
+    await playedThrough(ready)
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(ready.order.some((call) => call.startsWith("submit"))).toBe(false)
+    expect(ready.states.at(-1)?.errorCode).toBe("E_UNREACHABLE")
+  })
+
   test("a submit that got no answer, or that the platform failed, goes again", async () => {
     const ready = start({ submits: ["unreachable", "failed", "ok"] })
     await playedThrough(ready)
@@ -451,6 +478,81 @@ describe("the end of the run", () => {
       errorCode: "E_FRAME_FAILED",
       detail: "E_INIT_FAILED: no canvas",
     })
+  })
+})
+
+describe("after a failure", () => {
+  test("nothing more is sent, and the failure is the last state", async () => {
+    const ready = start()
+    const { handlers, states, order } = ready
+    handlers.onReady({
+      type: "ready",
+      protocol: 1,
+      manifestHash: "mh-1",
+      kernelVersion: "0.8.0",
+    })
+    handlers.onError({
+      type: "error",
+      code: "E_FRAME_THREW",
+      detail: "tick threw",
+    })
+    handlers.onProgress({ type: "progress", tick: 200, counters: {} })
+    handlers.onLogChunk({
+      type: "log-chunk",
+      fromIndex: 0,
+      inputs: [input(150)],
+    })
+    handlers.onEnded({
+      type: "ended",
+      tick: 300,
+      counters: {},
+      reason: "ended",
+      finalSnapshot: {},
+    } as never)
+    handlers.onRecordingChunk({
+      type: "recording-chunk",
+      index: 0,
+      total: 1,
+      data: "{}",
+    })
+    await settle()
+    expect(order).toEqual([])
+    expect(states.at(-1)?.errorCode).toBe("E_FRAME_FAILED")
+  })
+
+  test("a second ready does not start the game again", () => {
+    const { frame, handlers } = start()
+    const ready = {
+      type: "ready",
+      protocol: 1,
+      manifestHash: "mh-1",
+      kernelVersion: "0.8.0",
+    } as const
+    handlers.onReady(ready)
+    handlers.onReady(ready)
+    expect(frame.calls.filter(([name]) => name === "init")).toHaveLength(1)
+  })
+
+  test("destroying a run waiting to resend a submit stops it at once", async () => {
+    const frame = new FakeFrame()
+    const fake = fakeClient({ submits: ["unreachable", "ok"] })
+    let handlers: RunFrameHandlers | undefined
+    const driver = new Run({
+      client: fake.client,
+      run: RUN,
+      mount: (given) => {
+        handlers = given
+        return frame
+      },
+      retryDelayMs: 60_000,
+    })
+    if (handlers === undefined) throw new Error("mount was not called")
+    await playedThrough({ handlers } as ReturnType<typeof start>)
+    driver.destroy()
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    expect(fake.order.filter((call) => call.startsWith("submit"))).toHaveLength(
+      1,
+    )
   })
 })
 

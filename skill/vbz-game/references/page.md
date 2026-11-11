@@ -26,8 +26,9 @@ signInButton.onclick = () => platform.signIn() // from the click, nothing awaite
   browser opens one only in the click's own turn. Call it straight from the
   handler.
 - The player's token is kept in `localStorage`, one entry per page key, and
-  every run start renews it. A token the platform stops honouring is dropped,
-  and `onSignedOut` is told.
+  in memory, so a browser that keeps nothing still plays this visit. Every run
+  start renews it. A token the platform stops honouring is dropped, and
+  `onSignedOut` is told.
 - `signOut()` forgets the player on this page. No route signs a player out;
   the sign-in window's own page does that.
 
@@ -50,8 +51,9 @@ const driver = new Run({
   run fails with `E_WRONG_GAME`.
 - Each chunk ends at the last complete tick: one short of the last tick the
   frame reported while the run plays, the end tick once it has ended.
-- A chunk or a submit that got no answer goes again, unchanged. A refusal does
-  not.
+- A chunk or a submit that got no answer, or that the platform or a proxy in
+  front of it failed with a 5xx, goes again, unchanged. A refusal does not.
+- A failure is final: nothing more is sent, and the state stays `failed`.
 - The last chunk reaches the platform before the recording.
 - After the submit it waits for the replay, and `done` carries the result:
   what the replay computed, never what the frame showed.

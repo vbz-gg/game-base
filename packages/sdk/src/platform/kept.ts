@@ -3,8 +3,12 @@
  *
  * One entry per page key, because a token is good only beside a page key of
  * its own studio. An entry that will not parse, or has expired, reads as no
- * player and is removed; a store that throws reads as no player too, because
- * a page that cannot keep a token still works, it just signs in again.
+ * player and is removed.
+ *
+ * The page also holds the player in memory, and that copy is the one it
+ * reads once it has one. Storage is only what carries the player to the next
+ * visit, so a browser that keeps nothing (a private window, a blocked or full
+ * store) still plays this visit, and signs in again on the next.
  */
 
 import type { SignedInPlayer } from "../api/index.js"
@@ -32,34 +36,44 @@ export function storagePlayerStore(options: {
   readonly storage: () => Storage | undefined
   readonly now: () => number
 }): PlayerStore {
+  let held: KeptPlayer | null = null
   const forget = () => {
+    held = null
     try {
       options.storage()?.removeItem(options.key)
     } catch {
       // Nothing kept, nothing to forget.
     }
   }
+  const stored = (): KeptPlayer | null => {
+    let text: string | null | undefined
+    try {
+      text = options.storage()?.getItem(options.key)
+    } catch {
+      return null
+    }
+    return text === null || text === undefined ? null : parseKept(text)
+  }
   return {
     read() {
-      let text: string | null | undefined
-      try {
-        text = options.storage()?.getItem(options.key)
-      } catch {
-        return null
-      }
-      if (text === null || text === undefined) return null
-      const kept = parseKept(text)
-      if (kept === null || kept.expiresAt <= options.now()) {
+      const kept = held ?? stored()
+      if (kept === null) {
         forget()
         return null
       }
+      if (kept.expiresAt <= options.now()) {
+        forget()
+        return null
+      }
+      held = kept
       return kept
     },
     write(kept) {
+      held = kept
       try {
         options.storage()?.setItem(options.key, JSON.stringify(kept))
       } catch {
-        // A full or locked store keeps nothing, and the page signs in again.
+        // A full or locked store carries nothing to the next visit.
       }
     },
     clear: forget,
