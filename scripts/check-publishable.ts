@@ -23,7 +23,7 @@ import {
   symlinkSync,
 } from "node:fs"
 import { tmpdir } from "node:os"
-import { join, resolve } from "node:path"
+import { join, posix, resolve } from "node:path"
 import { pathToFileURL } from "node:url"
 import { $ } from "bun"
 
@@ -33,6 +33,8 @@ export type Shipped = {
   readonly name: string
   readonly version: string
   readonly dependencies: Record<string, string>
+  /** The commands the package installs, and the file each one runs. */
+  readonly bin: Record<string, string>
   readonly files: readonly string[]
   /** What plain node made of every subpath the exports map names. */
   readonly imports: ImportReport
@@ -155,15 +157,35 @@ export async function pack(pkg: string, into: string): Promise<Shipped> {
   await $`tar -xzf ${join(into, tarball)} -C ${out}`.quiet()
   const manifest = JSON.parse(
     readFileSync(join(out, "package", "package.json"), "utf8"),
-  ) as { name: string; version: string; dependencies?: Record<string, string> }
+  ) as {
+    name: string
+    version: string
+    dependencies?: Record<string, string>
+    bin?: Record<string, string>
+  }
   const files = [...new Bun.Glob("**/*").scanSync(join(out, "package"))]
   return {
     name: manifest.name,
     version: manifest.version,
     dependencies: manifest.dependencies ?? {},
+    bin: manifest.bin ?? {},
     files,
     imports: await unimportableSubpaths(join(out, "package")),
   }
+}
+
+/**
+ * A command's file as `npm publish` writes it: forward slashes, no leading
+ * `./`. It is the step `@npmcli/package-json` calls `secureAndUnixifyPath`.
+ *
+ * `npm pack` leaves the entry alone and `npm publish` rewrites it, so packing
+ * cannot show the difference. npm 12 reports the rewrite as
+ * `"bin[vbz]" script name dist/cli/index.js was invalid and removed` and then
+ * keeps the entry, which is how 0.3.0 was released: a log saying the command
+ * was gone, and a package that had it.
+ */
+export function asPublished(target: string): string {
+  return posix.join("/", target.replace(/\\/g, "/")).slice(1)
 }
 
 export function problemsWith(shipped: Shipped): string[] {
@@ -187,6 +209,20 @@ export function problemsWith(shipped: Shipped): string[] {
     if (!shipped.files.includes(file)) {
       problems.push(
         `${shipped.name} would ship no ${file}, which it reads at runtime`,
+      )
+    }
+  }
+  for (const [command, target] of Object.entries(shipped.bin)) {
+    const published = asPublished(target)
+    if (published !== target) {
+      problems.push(
+        `${shipped.name} names bin "${command}" as "${target}", which npm rewrites at publish and reports as removed; write "${published}"`,
+      )
+    }
+    // A command whose file is not in the tarball installs a link to nothing.
+    if (!shipped.files.includes(published)) {
+      problems.push(
+        `${shipped.name} would ship no ${published}, which the "${command}" command runs`,
       )
     }
   }
@@ -220,7 +256,7 @@ async function main(): Promise<number> {
     console.error("\na package would ship broken:")
     for (const line of found) console.error(`  ${line}`)
     console.error(
-      "\nthe manifest on disk is what ships; there is no rewrite step to blame",
+      "\nthe manifest on disk is what ships, apart from the command paths npm itself rewrites at publish",
     )
     return 1
   }

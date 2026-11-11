@@ -53,6 +53,6 @@
     "@clockwork2/engine": ">=0.8.0 <0.9.0"
   },
   "bin": {
-    "vbz": "./dist/cli/index.js"
+    "vbz": "dist/cli/index.js"
   }
 }

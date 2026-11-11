@@ -120,6 +120,12 @@ the tarball - `RUNTIME_FILES` in the script - because the harness bundles its
 page script from a path built off `import.meta.dir`, and nothing importing the
 package would notice that file missing.
 
+**A command's path in `bin` is written the way `npm publish` writes it**: no
+leading `./`. `npm pack` leaves the entry alone and `npm publish` rewrites
+it, and npm 12 logs the rewrite as the command being removed while keeping
+it. The check holds each entry to the published form, and to a file the
+tarball carries.
+
 ## The skill
 
 `skill/vbz-game/` is prose an agent follows literally, so a stale sentence
