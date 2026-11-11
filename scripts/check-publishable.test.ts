@@ -16,10 +16,12 @@ function shipped(over: Partial<Shipped> = {}): Shipped {
     name: "@vbz-gg/sdk",
     version: "0.1.0",
     dependencies: {},
+    bin: { vbz: "dist/cli/index.js" },
     files: [
       "package.json",
       "README.md",
       "dist/controls/index.js",
+      "dist/cli/index.js",
       ...RUNTIME_FILES,
     ],
     imports: { problems: [], skipped: [] },
@@ -65,6 +67,29 @@ describe("what a tarball would do to a consumer", () => {
       }),
     )
     expect(problems.join("\n")).toContain("main.js")
+  })
+
+  /**
+   * npm 12 logs a rewritten command entry as removed, and 0.3.0 went out
+   * with that line in its release log. Written the way npm publishes it,
+   * the log says nothing.
+   */
+  test("a command entry npm would rewrite at publish is caught", () => {
+    const problems = problemsWith(
+      shipped({ bin: { vbz: "./dist/cli/index.js" } }),
+    )
+    expect(problems).toEqual([
+      '@vbz-gg/sdk names bin "vbz" as "./dist/cli/index.js", which npm rewrites at publish and reports as removed; write "dist/cli/index.js"',
+    ])
+  })
+
+  test("a command whose file the tarball lacks is caught", () => {
+    const problems = problemsWith(
+      shipped({
+        files: shipped().files.filter((f) => f !== "dist/cli/index.js"),
+      }),
+    )
+    expect(problems.join("\n")).toContain('which the "vbz" command runs')
   })
 
   test("a subpath node cannot import is a problem", () => {

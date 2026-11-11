@@ -30,6 +30,10 @@ coveragePathIgnorePatterns = [
   # left out, so that it is a decision rather than a file nobody loaded.
   "packages/sdk/src/harness/page/main.ts",
   "fixtures/**",
+  # A test's own stand-ins, such as the fake page the platform client's tests
+  # drive. They are how a test reaches the code under test, not that code, and
+  # how much of a stand-in a test happens to use says nothing about the SDK.
+  "packages/sdk/tests/**",
   "packages/sdk/templates/**",
   "skill/**",
   "e2e/**",

@@ -24,11 +24,12 @@ build against it before an upload, and a pad drawn one way locally and another
 way in production is a scaffold that lies to the person who trusted it. That
 set of decisions is this package.
 
-So the SDK owns five things, one per subpath export:
+So the SDK owns six things, one per subpath export:
 
 | Subpath | What it is |
 |---|---|
 | `/api` | The shapes of the platform's public routes, as types only |
+| `/platform` | A game page's client for those routes: sign-in, runs, the board |
 | `/controls` | The scheme table and the renderer that draws it |
 | `/build` | A game's source to the two artifacts an upload carries |
 | `/serve` | The frame document, its CSP, and the routes the artifacts are fetched from |
@@ -42,9 +43,8 @@ The platform imports `/api`, and declares each public route's answer with its
 types. It imports `/build` and `/controls`, so it checks an upload against
 the contract and the scheme table an author builds with. It serves the frame
 document and the two artifacts with `/serve`, the code the harness serves a
-laptop with. A studio's page
-types its calls with `/api` and draws the pad with `/controls`. An author runs
-`/harness`.
+laptop with. A studio's page talks to the platform through `/platform` and
+draws the pad with `/controls`. An author runs `/harness`.
 
 ## The platform's route shapes
 
@@ -59,6 +59,54 @@ The platform depends on this package and this package on nothing of the
 platform's, so a change to a route's shape lands here first, is released, and
 is then taken by the platform. The platform's build fails when one of its
 routes answers a shape, or a refusal code, these types do not name.
+
+## The page's client
+
+`/platform` is what a studio's page uses to talk to the platform. It follows
+the protocol the platform's page guide describes, `docs/your-game-page.md` in
+vbz-gg/platform, and every request it makes goes through one function keyed
+by `PlatformRoutes`, so it cannot call a route the platform does not declare.
+A build system's routes are not offered: a secret key never belongs in a page.
+
+`createPlatformClient({ apiOrigin, signInOrigin, pageKey })` makes the client.
+It reads the browser only when it is made, never when the module loads, so a
+page's bundle may import it during server-side rendering, and a test hands it
+a page of its own through `environment`.
+
+**Signing in** opens the sign-in window before anything is awaited, because a
+browser opens one only in the turn of the click that asked. It sends a PKCE
+challenge and a state, takes a message only from that window, on the sign-in
+origin, of type `vbz.signin`, carrying that state, and trades the code at
+`POST /v1/oauth/token`. A window closed with no code fails after 500 ms of
+grace, because the window closes itself right after posting and a browser can
+report the close first.
+
+**The player's token** is kept in `localStorage`, one entry per page key,
+because a token is good only beside a page key of its own studio. Every run
+start renews it, and the renewed one is kept. A token the platform answers
+with `E_SIGN_IN_REQUIRED` is dropped, but only while it is still the kept one:
+an older run's token refused after the player signed in again says nothing
+about the new one. The page also holds the player in memory and reads that
+copy once it has one, so a browser that keeps nothing (a private window, a
+blocked or full store) still plays this visit, and signs in again on the next.
+
+A run's own writes and its result are sent with the token from its own start,
+not with whatever player is kept by then.
+
+**`Run`** drives one run through a frame the page makes with
+`createGameFrame`. It checks the frame's manifest hash against the run's
+before a tick runs. It ends each chunk at the last complete tick: one short of
+the last tick the frame reported while the run plays, because the engine
+takes a tick's inputs before running it, and the end tick once the run has
+ended (`throughTickFor`). Chunks go one at a time; one that got no answer goes
+again, unchanged, before the next. The last chunk reaches the platform before
+the recording, a submit that got no answer goes again (the same recording
+answers the same), and then it asks for the result until the replay has run.
+
+The client's own failures are `PlatformClientError`, with codes from
+`CLIENT_ERROR`; the platform's are `PlatformRefusal`, with a
+`PublicRefusalCode`. The two sets never share a code, and a compile-time check
+holds them apart.
 
 ## Controls
 
@@ -358,5 +406,7 @@ package is about: `inputs.controls` arrived in a minor, and so did pointer
 identity. Each engine minor is a deliberate bump here.
 
 Only `/harness` imports the engine at all, from one line: the page script
-bundles `@clockwork2/engine/parent`. `/controls`, `/build` and `/serve` reach
-it nowhere.
+bundles `@clockwork2/engine/parent`. `/platform` names the frame's message
+types with `import type`, which leaves nothing in a bundle, and the page hands
+`Run` a frame it made itself. `/controls`, `/build` and `/serve` reach it
+nowhere.

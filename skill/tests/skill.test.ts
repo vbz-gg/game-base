@@ -25,6 +25,7 @@ import {
   MIN_TOUCH_PX,
   SCHEMES,
 } from "../../packages/sdk/src/controls/index.js"
+import { CLIENT_ERROR } from "../../packages/sdk/src/platform/errors.js"
 
 const SKILL = join(import.meta.dir, "..", "vbz-game")
 const REFERENCES = join(SKILL, "references")
@@ -115,6 +116,20 @@ describe("what the prose restates from the code", () => {
       if (code === BUILD_REFUSAL.REWRITE_FAILED) continue // the platform's, never an author's
       expect(text).toContain(code)
     }
+  })
+})
+
+describe("the page's client", () => {
+  /**
+   * A code the page reference names that the client does not raise sends a
+   * page author looking for a failure that cannot happen, and a code it
+   * raises that the reference never explains leaves them guessing.
+   */
+  test("every client code is explained, and every one named exists", async () => {
+    const text = await read("references", "page.md")
+    const table = text.slice(text.indexOf("## Codes"))
+    const named = new Set(table.match(/E_[A-Z0-9_]+/g) ?? [])
+    expect([...named].sort()).toEqual(Object.keys(CLIENT_ERROR).sort())
   })
 })
 
