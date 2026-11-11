@@ -52,6 +52,29 @@ because the platform depends on this package and this package on nothing of
 the platform's. Within `/v1` a change only adds. `packages/sdk/tests/api.test.ts`
 holds the subpath to exporting no value, because a studio's page bundles it.
 
+## The page's client
+
+`packages/sdk/src/platform/` is a studio page's client for those routes, and
+`docs/sdk.md` describes it. What to hold while changing it:
+
+**Every request goes through `request`**, which is keyed by `PlatformRoutes`.
+A URL built by hand is a route the compiler cannot check, and a secret key's
+route is not offered to a page at all.
+
+**Nothing reads the browser when the module loads.** The browser arrives
+through `PageEnvironment` when a client is made, so a page may import the
+subpath while rendering on a server, and `check:publishable` imports it under
+plain node.
+
+**`signIn()` opens the window before it awaits anything.** Anything awaited
+first, even a resolved promise, moves the open out of the click's turn and the
+browser blocks it.
+
+**The client's codes and the platform's never share a name.** `CLIENT_ERROR`
+in `errors.ts` is the client's table, a compile-time check keeps it apart from
+`PublicRefusalCode`, and the skill's `references/page.md` explains every entry,
+held both ways by `skill/tests/skill.test.ts`. A new code is a new row in both.
+
 ## Working on controls
 
 `docs/sdk.md` has the three answers a manifest can give, the scheme table and

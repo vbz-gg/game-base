@@ -170,6 +170,8 @@ about determinism:
 - `references/harness.md` - what `vbz dev` serves and what it does not
   reproduce.
 - `references/ingest.md` - what the platform checks, in the order it checks it.
+- `references/page.md` - the studio's page: signing a player in, a run from
+  start to result, and the client's codes.
 
 ## Commands
 
