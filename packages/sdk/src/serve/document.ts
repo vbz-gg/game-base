@@ -61,10 +61,13 @@ export function frameDocument(input: FrameDocumentInput): string {
  * loaded.
  *
  * `connect-src 'none'` stops fetch, XHR, WebSocket, EventSource and Beacon. It
- * does not govern WebRTC, which has its own directive that only Chromium
- * honours, so this narrows the blast radius rather than closing it. What
- * actually makes the frame safe to hand a stranger's code is that it holds
- * nothing worth sending: a seed, a config, and the player's own keystrokes.
+ * does not govern WebRTC, and no browser measured honours the `webrtc`
+ * directive that would: Chromium 141 and 153, Firefox 142 and WebKit 26 each
+ * reject `webrtc 'block'` as unknown, say so in the console of every page
+ * that frames a game, and open a peer connection anyway. So the policy names
+ * only directives all three know, and what makes the frame safe to hand a
+ * stranger's code is that it holds nothing worth sending: a seed, a config,
+ * and the player's own keystrokes.
  */
 export function frameCsp(siteOrigins: readonly string[]): string {
   return [
@@ -76,7 +79,6 @@ export function frameCsp(siteOrigins: readonly string[]): string {
     "img-src 'self' data: blob:",
     "media-src 'self' data: blob:",
     "connect-src 'none'",
-    "webrtc 'block'",
     "form-action 'none'",
     "base-uri 'none'",
     "object-src 'none'",
