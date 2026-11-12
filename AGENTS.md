@@ -76,6 +76,27 @@ in `errors.ts` is the client's table, a compile-time check keeps it apart from
 `PublicRefusalCode`, and the skill's `references/page.md` explains every entry,
 held both ways by `skill/tests/skill.test.ts`. A new code is a new row in both.
 
+## The page's host
+
+`packages/sdk/src/host/` puts a game on a page, and the harness's page frames
+with it too, so a page and the harness cannot frame a game two ways.
+`docs/sdk.md` describes it. What to hold while changing it:
+
+**A host refuses before it frames.** `hostedControls` reads the manifest
+first, and anything a host cannot draw or the platform cannot replay throws
+before a frame or a control exists.
+
+**Nothing starts in a frame that speaks another protocol version.** Its
+`ready` goes to `onRefused` and never to `onReady`.
+
+**A press from a drawn control goes through the run.** `playRun` hands the
+host `Run.press`, which drops a press outside the run; never wire a control
+to the frame's `virtualInput` beside a run.
+
+**The widgets are plain DOM with every colour a `--gb-widget-*` custom
+property**, as the pad is, and show a failure in the client's or the
+platform's own sentence for its code.
+
 ## Working on controls
 
 `docs/sdk.md` has the three answers a manifest can give, the scheme table and

@@ -13,6 +13,8 @@ It publishes one package, `@vbz-gg/sdk`, which carries:
 
 - **the on-screen control schemes**, and the renderer that draws them, so the
   pad you test against is the pad a player gets
+- **a page's client and host**, which sign a player in, frame the game, play a
+  run against the platform and show the board
 - **the build**, which turns a game into the two artifacts an upload carries
 - **a harness**, which frames your game locally the way it runs in production:
   two origins, the sandbox, the CSP and a full-viewport page

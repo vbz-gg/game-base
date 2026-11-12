@@ -28,6 +28,7 @@ const RUN: StartedRun = {
     id: "v-1",
     frameUrl: "https://bundles.example/v/v-1",
     manifestHash: "mh-1",
+    manifest: { id: "lane-runner" },
     tickHz: 60,
     maxTicks: 7200,
     maxWallSeconds: 300,

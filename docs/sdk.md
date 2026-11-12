@@ -24,12 +24,13 @@ build against it before an upload, and a pad drawn one way locally and another
 way in production is a scaffold that lies to the person who trusted it. That
 set of decisions is this package.
 
-So the SDK owns six things, one per subpath export:
+So the SDK owns seven things, one per subpath export:
 
 | Subpath | What it is |
 |---|---|
 | `/api` | The shapes of the platform's public routes, as types only |
 | `/platform` | A game page's client for those routes: sign-in, runs, the board |
+| `/host` | The game on a page: its frame, its controls, a run through them, and two widgets |
 | `/controls` | The scheme table and the renderer that draws it |
 | `/build` | A game's source to the two artifacts an upload carries |
 | `/serve` | The frame document, its CSP, and the routes the artifacts are fetched from |
@@ -44,7 +45,8 @@ types. It imports `/build` and `/controls`, so it checks an upload against
 the contract and the scheme table an author builds with. It serves the frame
 document and the two artifacts with `/serve`, the code the harness serves a
 laptop with. A studio's page talks to the platform through `/platform` and
-draws the pad with `/controls`. An author runs `/harness`.
+frames the game with `/host`, which draws the pad with `/controls`. An author
+runs `/harness`, whose page frames the game with `/host` too.
 
 ## The platform's route shapes
 
@@ -107,6 +109,43 @@ The client's own failures are `PlatformClientError`, with codes from
 `CLIENT_ERROR`; the platform's are `PlatformRefusal`, with a
 `PublicRefusalCode`. The two sets never share a code, and a compile-time check
 holds them apart.
+
+## Hosting a game on a page
+
+`/host` is what puts a game on a studio's page, so a page does not wire the
+engine's frame, the run and the pad together itself, and the harness frames a
+game with the same code a page does.
+
+`mountHost(element, { frameUrl, manifest, handlers })` reads the manifest
+first, and refuses with a `PlatformClientError` before anything is framed
+when it asks for something a host cannot do: a scheme this SDK does not
+draw, or a slot the scheme lacks (`E_SCHEME_UNDRAWABLE`), a data pack the
+simulation reads (`E_SIM_PACKS`, refused because the platform refuses one at
+upload and the harness should say so first), or anything that is not a
+manifest. Then it frames the document with `parent` set to the page's own
+origin, which the frame document names in `frame-ancestors`, and draws the
+manifest's controls over it. A game that declares no controls is
+`keyboard`, which a page can read to tell a phone player before a run starts.
+
+The frame's `ready` carries the version of the engine's frame protocol it
+speaks. A frame in another version than the page's engine is refused with
+`E_FRAME_PROTOCOL` and never reported ready, because every message after the
+hello would be misread: nothing is started in it.
+
+`playRun(element, { client, run, onState })` is a platform run through that
+host. It frames `run.game.frameUrl` and draws the controls of
+`run.game.manifest`, the manifest of the version the run plays, which on a
+publish day may not be the one `GET /v1/game` describes for a practice run.
+A press on a control goes through `Run.press`, never straight to the frame,
+so a press before the run has started or after it has ended is dropped.
+
+Two widgets sit beside it. `mountSignIn` is a button that signs a player in
+and out, which calls `signIn()` in the click's own turn and shows a failure
+beside itself in the client's own sentence. `mountBoard` is a table of a
+board: rank, name and each counter the game ranks by, in the manifest's
+order, with the reader's own row marked `aria-current` and shown after the
+page when it is not on it. Both are plain DOM and take every colour from a
+`--gb-widget-*` custom property with a fallback, as the pad does.
 
 ## Controls
 
@@ -314,7 +353,9 @@ repository, at the same path relative to the CLI in the source tree and in
 `vbz dev ./my-game` builds the two real artifacts and serves them behind
 the frame document above, then serves a page on a **second port** that frames
 it the way a game's page would: full viewport, the floating mark, the pad the
-manifest asked for.
+manifest asked for. It frames the game with `mountHost`, so a manifest a host
+refuses, or a frame in another protocol version, is refused here first and
+said in the page's status line.
 
 Two ports are two origins, which is what puts an author in front of the traps a
 sandboxed cross-origin frame actually has rather than after an upload. What two
@@ -405,8 +446,8 @@ maps a breaking change to a minor, so `0.7.0` may move the very things this
 package is about: `inputs.controls` arrived in a minor, and so did pointer
 identity. Each engine minor is a deliberate bump here.
 
-Only `/harness` imports the engine at all, from one line: the page script
-bundles `@clockwork2/engine/parent`. `/platform` names the frame's message
-types with `import type`, which leaves nothing in a bundle, and the page hands
-`Run` a frame it made itself. `/controls`, `/build` and `/serve` reach it
-nowhere.
+Only `/host` imports the engine's code, from two lines: the parent bridge
+that makes the frame, and the protocol's version number. The harness's page
+reaches it through `/host`. `/platform` names the frame's message types with
+`import type`, which leaves nothing in a bundle, and `Run` takes whatever
+frame it is handed. `/controls`, `/build` and `/serve` reach it nowhere.

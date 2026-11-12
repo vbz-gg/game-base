@@ -275,6 +275,12 @@ export interface StartedRun {
     readonly frameUrl: string
     /** Compared against the frame's own before a tick runs. */
     readonly manifestHash: string
+    /**
+     * The manifest of the version this run plays, as uploaded. A practice
+     * run can play a newer version than today's round, so this, rather
+     * than `GET /v1/game`'s, is what says which controls to draw.
+     */
+    readonly manifest: unknown
     readonly tickHz: number
     readonly maxTicks: number
     readonly maxWallSeconds: number

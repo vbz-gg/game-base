@@ -38,6 +38,11 @@
       "types": "./dist/harness/index.d.ts",
       "default": "./dist/harness/index.js"
     },
+    "./host": {
+      "development": "./src/host/index.ts",
+      "types": "./dist/host/index.d.ts",
+      "default": "./dist/host/index.js"
+    },
     "./platform": {
       "development": "./src/platform/index.ts",
       "types": "./dist/platform/index.d.ts",
