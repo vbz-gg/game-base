@@ -115,10 +115,12 @@ A refusal arrives as `{ error, message }`, where `error` is one of
 
 `@vbz-gg/sdk/platform` is your page's client for vbz.gg: it signs a player
 in, starts a run, sends the run as it goes, submits it, and reads the board.
+`@vbz-gg/sdk/host` puts the game on your page: the sandboxed frame, the
+controls its manifest asks for, a sign-in button and a board table.
 
 ```ts
-import { createGameFrame } from "@clockwork2/engine/parent"
-import { createPlatformClient, Run } from "@vbz-gg/sdk/platform"
+import { mountBoard, mountSignIn, playRun } from "@vbz-gg/sdk/host"
+import { createPlatformClient } from "@vbz-gg/sdk/platform"
 
 const platform = createPlatformClient({
   apiOrigin: API_ORIGIN, // from vbz.gg
@@ -126,22 +128,28 @@ const platform = createPlatformClient({
   pageKey: PAGE_KEY, // vbz_pk_..., from the dashboard
 })
 
-// From the click itself: the browser opens the sign-in window only there.
-signInButton.onclick = () => platform.signIn()
+// Opens the sign-in window in the click itself, the only place a browser
+// opens one.
+mountSignIn(signInSlot, { client: platform })
+const board = mountBoard(boardSlot, { client: platform, period: "week" })
+await board.refresh()
 
 playButton.onclick = async () => {
   const run = await platform.startRun()
-  const driver = new Run({
+  playRun(stage, {
     client: platform,
     run,
-    mount: (handlers) =>
-      createGameFrame({ container: stage, src: run.game.frameUrl, ...handlers }),
     onState: (state) => render(state), // ends at "done", with the replay's result
   })
 }
-
-const board = await platform.board({ period: "week" })
 ```
+
+`stage` needs a positioning context of its own: the frame fills it and the
+controls sit on top. A press on a control goes through the run, so one before
+the run starts or after it ends reaches nothing. The widgets take their
+colours from `--gb-widget-*` custom properties, as the pad takes its from
+`--gb-control-*`. `mountHost` is the frame and controls alone, for a page that
+drives `Run` from `@vbz-gg/sdk/platform` itself.
 
 The player's token is kept in `localStorage` and renewed at every run start.
 A failure is a `PlatformRefusal`, carrying the platform's code, or a

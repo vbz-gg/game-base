@@ -61,6 +61,12 @@ export interface RunFrameHandlers {
   onEnded(message: FromFrame<"ended">): void
   onRecordingChunk(message: FromFrame<"recording-chunk">): void
   onError(message: FromFrame<"error">): void
+  /**
+   * The host refusing the frame before the run starts: `mountHost` calls it
+   * with `E_FRAME_PROTOCOL` for a frame that answers in another protocol
+   * version. A frame of the page's own making need never call it.
+   */
+  onRefused(error: PlatformClientError): void
 }
 
 export const RUN_PHASE = {
@@ -165,6 +171,13 @@ export class Run {
       },
       onError: (message) =>
         this.fail("E_FRAME_FAILED", `${message.code}: ${message.detail}`),
+      onRefused: (error) =>
+        this.fail(
+          error.code,
+          error.cause === undefined
+            ? error.message
+            : `${error.message}: ${JSON.stringify(error.cause)}`,
+        ),
     })
   }
 

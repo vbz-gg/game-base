@@ -92,7 +92,9 @@ export async function startHarness(options: HarnessOptions): Promise<Harness> {
         tickHz: manifest.session?.tickHz ?? 60,
         maxTicks: manifest.session?.maxTicks ?? 36000,
         config: null,
-        controls: manifest.inputs?.controls ?? null,
+        // Whole, so the page reads its controls the way a game's page does:
+        // through `mountHost`, which refuses what a host cannot draw.
+        manifest,
       },
     }),
   )

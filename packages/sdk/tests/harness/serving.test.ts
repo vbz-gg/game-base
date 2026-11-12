@@ -185,7 +185,9 @@ describe("the harness, started whole", () => {
       try {
         const html = await (await fetch(plain.hostOrigin)).text()
         expect(html).toContain(`"tickHz":60`)
-        expect(html).toContain(`"controls":null`)
+        // An empty manifest, which the page reads as a game that wants a
+        // keyboard, the same as a manifest that declares no controls.
+        expect(html).toContain(`"manifest":{}`)
         expect(html).toContain(`"seed":"chosen"`)
       } finally {
         await plain.stop()

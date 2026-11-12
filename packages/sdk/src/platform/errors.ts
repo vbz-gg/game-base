@@ -55,6 +55,17 @@ export const CLIENT_ERROR = {
   E_RECORDING_UNREADABLE: "the frame's recording could not be read",
   /** The frame posted an error of its own. */
   E_FRAME_FAILED: "the game's frame reported an error",
+  /** The frame speaks another version of the engine's frame protocol. */
+  E_FRAME_PROTOCOL:
+    "the game's frame speaks another version of the frame protocol than this page's engine",
+  /** The manifest is not an object a host can read controls from. */
+  E_MANIFEST_UNREADABLE: "the game's manifest could not be read",
+  /** The manifest names a scheme, or a slot, this SDK does not draw. */
+  E_SCHEME_UNDRAWABLE:
+    "the game's manifest names on-screen controls this SDK does not draw",
+  /** The manifest declares a data pack the simulation reads. */
+  E_SIM_PACKS:
+    "the game's manifest declares a data pack its simulation reads, which the platform cannot store or replay yet",
   /** An error this client has no code for: a bug to report, with its detail. */
   E_UNEXPECTED: "the run met an error the client has no code for",
 } as const
