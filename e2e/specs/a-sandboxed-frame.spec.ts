@@ -15,6 +15,16 @@ import { clearRequests, open, requests, subjects } from "../src/run"
 test("the game is framed cross-origin and the page cannot reach inside", async ({
   page,
 }) => {
+  // What the page and its frame put in the console. A policy directive the
+  // browser does not know lands here on every load of every page that frames
+  // a game; `webrtc` did, in Chromium, Firefox and WebKit alike.
+  const errors: string[] = []
+  page.on("pageerror", (error) => errors.push(error.message))
+  page.on("console", (message) => {
+    if (message.type() !== "error") return
+    if (message.text().startsWith("Failed to load resource")) return
+    errors.push(message.text())
+  })
   await open(page, "template")
   const frame = page.locator("#stage iframe")
 
@@ -31,6 +41,7 @@ test("the game is framed cross-origin and the page cannot reach inside", async (
     (node) => (node as HTMLIFrameElement).contentDocument !== null,
   )
   expect(reachable).toBe(false)
+  expect(errors).toEqual([])
 })
 
 /**

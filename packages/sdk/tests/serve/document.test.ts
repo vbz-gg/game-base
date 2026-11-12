@@ -62,10 +62,34 @@ describe("the frame's policy", () => {
     const csp = frameCsp(["https://vbz.gg"])
     expect(csp).toContain("default-src 'none'")
     expect(csp).toContain("connect-src 'none'")
-    // WebRTC has its own directive, which only Chromium honours. It narrows
-    // the blast radius rather than closing it, so it is here and the frame
-    // still holds nothing worth sending.
-    expect(csp).toContain("webrtc 'block'")
+  })
+
+  /**
+   * A directive a browser does not know is an error in the console of every
+   * page that frames a game, on every load, and protects nothing. `webrtc`
+   * was one: Chromium 141 and 153, Firefox 142 and WebKit 26 all rejected it
+   * and opened a peer connection regardless. These are the directives all
+   * three accepted.
+   */
+  test("names only directives every browser knows", () => {
+    const known = new Set([
+      "sandbox",
+      "default-src",
+      "script-src",
+      "worker-src",
+      "style-src",
+      "img-src",
+      "media-src",
+      "connect-src",
+      "form-action",
+      "base-uri",
+      "object-src",
+      "frame-ancestors",
+    ])
+    const named = frameCsp(["https://vbz.gg"])
+      .split(";")
+      .map((directive) => directive.trim().split(" ")[0] ?? "")
+    expect(named.filter((name) => !known.has(name))).toEqual([])
   })
 
   test("only the named origins may frame it", () => {
