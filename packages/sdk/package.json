@@ -1,6 +1,6 @@
 {
   "name": "@vbz-gg/sdk",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "type": "module",
   "description": "Build a game that runs on vbz.gg: on-screen controls, the two artifacts, and a harness that frames your game the way production does",
   "license": "MIT",

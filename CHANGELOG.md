@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.5.0](https://github.com/vbz-gg/sdk/compare/v0.4.0...v0.5.0) (2026-11-12)
+
+
+### Features
+
+* **host:** put a game on a studio's page with @vbz-gg/sdk/host ([#19](https://github.com/vbz-gg/sdk/issues/19)) ([031ecb4](https://github.com/vbz-gg/sdk/commit/031ecb41177e96d8ed366e03e9300b18c0758056))
+
 ## [0.4.0](https://github.com/vbz-gg/sdk/compare/v0.3.0...v0.4.0) (2026-11-11)
 
 
